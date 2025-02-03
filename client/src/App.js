@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import FileUpload from "./components/FileUpload";
 import DataTable from "./components/DataTable";
 import KeySelection from "./components/KeySelection";
-import JsonModal from "./components/JsonModal"; // ✅ JSON 모달 추가
+import JsonModal from "./components/JsonModal";
+import { parseGPTResponse } from "./utils/parseGPTResponse"; // ✅ 추가된 부분
+
 import { sendPrompt } from "./services/apiService";
 
 function App() {
@@ -13,8 +15,10 @@ function App() {
     const [selectedRows, setSelectedRows] = useState([]);
     const [secretPassword, setSecretPassword] = useState("");
     const [responses, setResponses] = useState({});
+    const [parsedResponses, setParsedResponses] = useState({});
     const [userRequest, setUserRequest] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [progress, setProgress] = useState(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [jsonData, setJsonData] = useState([]);
 
@@ -48,10 +52,14 @@ function App() {
         }
 
         setIsLoading(true);
-        const newResponses = { ...responses };
+        setProgress(0);
+        const totalRequests = selectedRows.length;
+        const newResponses = {};
+        const newParsedResponses = {};
 
-        for (const rowIndex of selectedRows) {
-            const selectedRow = { key_number: data[rowIndex][keyColumn] }; // ✅ 식별번호 포함
+        for (let i = 0; i < totalRequests; i++) {
+            const rowIndex = selectedRows[i];
+            const selectedRow = { key_number: data[rowIndex][keyColumn] };
             selectedColumns.forEach((col) => {
                 selectedRow[col] = data[rowIndex][col];
             });
@@ -59,11 +67,19 @@ function App() {
             try {
                 const result = await sendPrompt(selectedRow, userRequest, secretPassword);
                 newResponses[rowIndex] = result.message;
+
+                // ✅ 응답 파싱
+                newParsedResponses[rowIndex] = parseGPTResponse(result.message);
             } catch (error) {
                 newResponses[rowIndex] = "API 요청 오류 발생";
+                newParsedResponses[rowIndex] = {};
             }
 
             setResponses({ ...newResponses });
+            setParsedResponses({ ...newParsedResponses });
+
+            // ✅ 진행률 업데이트
+            setProgress(((i + 1) / totalRequests) * 100);
         }
 
         setIsLoading(false);
@@ -77,7 +93,7 @@ function App() {
         }
 
         const formattedData = selectedRows.map((rowIndex) => {
-            const selectedRow = { key_number: data[rowIndex][keyColumn] }; // ✅ 식별번호 포함
+            const selectedRow = { key_number: data[rowIndex][keyColumn] };
             selectedColumns.forEach((col) => {
                 selectedRow[col] = data[rowIndex][col];
             });
@@ -111,7 +127,6 @@ function App() {
                         setHeaders={setHeaders}
                     />
 
-                    {/* ✅ 사용자가 직접 추가 요청을 입력할 수 있도록 UI 추가 */}
                     <div style={{ marginTop: "20px" }}>
                         <h3>📜 추가 요청 사항</h3>
                         <textarea
@@ -135,17 +150,19 @@ function App() {
                         </button>
                     </div>
 
-                    {/* ✅ JSON 데이터 확인 버튼 */}
                     <div style={{ marginTop: "10px" }}>
                         <button onClick={handleShowJson}>JSON 데이터 확인</button>
                     </div>
 
-                    {/* ✅ JSON 데이터 모달 추가 */}
-                    <JsonModal
-                        isOpen={isModalOpen}
-                        onClose={() => setIsModalOpen(false)}
-                        jsonData={jsonData}
-                    />
+                    <JsonModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} jsonData={jsonData} />
+
+                    {/* ✅ 진행 바 (로딩 상태) */}
+                    {isLoading && (
+                        <div style={{ marginTop: "20px" }}>
+                            <progress value={progress} max="100"></progress>
+                            <p>{Math.round(progress)}% 완료</p>
+                        </div>
+                    )}
 
                     <h3>응답:</h3>
                     <div>
@@ -156,6 +173,19 @@ function App() {
                                     <pre>{responses[rowIndex]}</pre>
                                 ) : (
                                     <span>응답 대기 중...</span>
+                                )}
+
+                                {/* ✅ 지원자별 응답 카드 추가 */}
+                                {parsedResponses[rowIndex] && (
+                                    <div style={{
+                                        border: "1px solid #ccc", padding: "10px", marginTop: "10px", borderRadius: "5px",
+                                        maxHeight: "150px", overflowY: "auto", backgroundColor: "#f9f9f9"
+                                    }}>
+                                        <h4>📌 질문 목록</h4>
+                                        {Object.entries(parsedResponses[rowIndex]).map(([key, value]) => (
+                                            <p key={key}><strong>{key}:</strong> {value}</p>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         ))}

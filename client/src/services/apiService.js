@@ -54,6 +54,7 @@ ${userRequestString}
         // ✅ API 요청 (환경변수에서 불러온 엔드포인트 사용)
         const response = await axiosInstance.post("/gpt/generate-text", {
             prompt: finalPrompt,
+            max_tokens: 1500,  // ✅ 토큰 수 증가
             secretPassword
         });
 
