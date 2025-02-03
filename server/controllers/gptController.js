@@ -2,7 +2,14 @@ const axios = require('axios');
 const { OPENAI_API_URL, openaiHeaders } = require('../config/openaiConfig');
 
 const generateText = async (req, res) => {
-    const { prompt } = req.body;
+    const { prompt, secretPassword } = req.body;
+    const serverPassword = process.env.SECRET_PASSWORD; // 백엔드 비밀번호
+
+    // 비밀번호 검증
+    if (!secretPassword || secretPassword !== serverPassword) {
+        return res.status(403).json({ message: 'Access Denied: Invalid Password' });
+    }
+
     if (!prompt) {
         return res.status(400).json({ message: 'Prompt is required' });
     }
