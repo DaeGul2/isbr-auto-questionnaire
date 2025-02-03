@@ -3,9 +3,8 @@ import FileUpload from "./components/FileUpload";
 import DataTable from "./components/DataTable";
 import KeySelection from "./components/KeySelection";
 import JsonModal from "./components/JsonModal";
-import { parseGPTResponse } from "./utils/parseGPTResponse"; // ✅ 추가된 부분
-
 import { sendPrompt } from "./services/apiService";
+import { parseGPTResponse } from "./utils/parseGPTResponse"; // ✅ 파싱 함수 추가
 
 function App() {
     const [headers, setHeaders] = useState([]);
@@ -85,7 +84,6 @@ function App() {
         setIsLoading(false);
     };
 
-    // ✅ JSON 데이터 확인 버튼 클릭 시 모달에 데이터 저장 후 띄우기
     const handleShowJson = () => {
         if (selectedColumns.length === 0 || selectedRows.length === 0) {
             alert("보낼 컬럼과 행을 최소 하나 이상 선택하세요!");
@@ -179,7 +177,7 @@ function App() {
                                 {parsedResponses[rowIndex] && (
                                     <div style={{
                                         border: "1px solid #ccc", padding: "10px", marginTop: "10px", borderRadius: "5px",
-                                        maxHeight: "150px", overflowY: "auto", backgroundColor: "#f9f9f9"
+                                        maxHeight: "200px", overflowY: "auto", backgroundColor: "#f9f9f9"
                                     }}>
                                         <h4>📌 질문 목록</h4>
                                         {Object.entries(parsedResponses[rowIndex]).map(([key, value]) => (
