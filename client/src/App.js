@@ -12,6 +12,7 @@ function App() {
     const [selectedRows, setSelectedRows] = useState([]);
     const [secretPassword, setSecretPassword] = useState("");
     const [response, setResponse] = useState("");
+    const [userRequest, setUserRequest] = useState(""); // ✅ 사용자가 추가 요청 입력
 
     const handleFileUpload = (headers, rows) => {
         setHeaders(headers);
@@ -26,7 +27,7 @@ function App() {
             ...row,
         }));
 
-        setHeaders(["키값", ...headers]); // 키값을 맨 왼쪽으로 추가
+        setHeaders(["키값", ...headers]);
         setData(updatedData);
         setKeyColumn("키값");
     };
@@ -51,7 +52,7 @@ function App() {
         });
 
         try {
-            const result = await sendPrompt(JSON.stringify(filteredData), secretPassword);
+            const result = await sendPrompt(filteredData, userRequest, secretPassword);
             setResponse(result.message);
         } catch (error) {
             setResponse("API 요청 오류 발생");
@@ -78,8 +79,21 @@ function App() {
                         setSelectedColumns={setSelectedColumns}
                         selectedRows={selectedRows}
                         setSelectedRows={setSelectedRows}
-                        setHeaders={setHeaders} // ✅ 컬럼 삭제 반영
+                        setHeaders={setHeaders}
                     />
+
+                    {/* ✅ 사용자가 직접 추가 요청을 입력할 수 있도록 UI 추가 */}
+                    <div style={{ marginTop: "20px" }}>
+                        <h3>📜 추가 요청 사항</h3>
+                        <textarea
+                            value={userRequest}
+                            onChange={(e) => setUserRequest(e.target.value)}
+                            rows="3"
+                            cols="50"
+                            placeholder="GPT에게 추가적으로 요청할 사항을 입력하세요..."
+                        />
+                    </div>
+
                     <div>
                         <input 
                             type="password" 
