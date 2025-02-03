@@ -1,12 +1,10 @@
 import axios from "axios";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-
 const axiosInstance = axios.create({
-    baseURL: API_BASE_URL, // API 기본 URL 설정
+    baseURL: process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/api", // ✅ 환경 변수 활용
     headers: {
-        "Content-Type": "application/json",
-    },
+        "Content-Type": "application/json"
+    }
 });
 
 export default axiosInstance;

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import FileUpload from "./components/FileUpload";
 import DataTable from "./components/DataTable";
 import KeySelection from "./components/KeySelection";
+import JsonModal from "./components/JsonModal"; // ✅ JSON 모달 추가
 import { sendPrompt } from "./services/apiService";
 
 function App() {
@@ -11,8 +12,11 @@ function App() {
     const [selectedColumns, setSelectedColumns] = useState([]);
     const [selectedRows, setSelectedRows] = useState([]);
     const [secretPassword, setSecretPassword] = useState("");
-    const [response, setResponse] = useState("");
-    const [userRequest, setUserRequest] = useState(""); // ✅ 사용자가 추가 요청 입력
+    const [responses, setResponses] = useState({});
+    const [userRequest, setUserRequest] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [jsonData, setJsonData] = useState([]);
 
     const handleFileUpload = (headers, rows) => {
         setHeaders(headers);
@@ -43,20 +47,45 @@ function App() {
             return;
         }
 
-        const filteredData = selectedRows.map((rowIndex) => {
-            const selectedRow = {};
+        setIsLoading(true);
+        const newResponses = { ...responses };
+
+        for (const rowIndex of selectedRows) {
+            const selectedRow = { key_number: data[rowIndex][keyColumn] }; // ✅ 식별번호 포함
+            selectedColumns.forEach((col) => {
+                selectedRow[col] = data[rowIndex][col];
+            });
+
+            try {
+                const result = await sendPrompt(selectedRow, userRequest, secretPassword);
+                newResponses[rowIndex] = result.message;
+            } catch (error) {
+                newResponses[rowIndex] = "API 요청 오류 발생";
+            }
+
+            setResponses({ ...newResponses });
+        }
+
+        setIsLoading(false);
+    };
+
+    // ✅ JSON 데이터 확인 버튼 클릭 시 모달에 데이터 저장 후 띄우기
+    const handleShowJson = () => {
+        if (selectedColumns.length === 0 || selectedRows.length === 0) {
+            alert("보낼 컬럼과 행을 최소 하나 이상 선택하세요!");
+            return;
+        }
+
+        const formattedData = selectedRows.map((rowIndex) => {
+            const selectedRow = { key_number: data[rowIndex][keyColumn] }; // ✅ 식별번호 포함
             selectedColumns.forEach((col) => {
                 selectedRow[col] = data[rowIndex][col];
             });
             return selectedRow;
         });
 
-        try {
-            const result = await sendPrompt(filteredData, userRequest, secretPassword);
-            setResponse(result.message);
-        } catch (error) {
-            setResponse("API 요청 오류 발생");
-        }
+        setJsonData(formattedData);
+        setIsModalOpen(true);
     };
 
     return (
@@ -101,10 +130,36 @@ function App() {
                             value={secretPassword} 
                             onChange={(e) => setSecretPassword(e.target.value)} 
                         />
-                        <button onClick={handleSendPrompt}>GPT 요청 보내기</button>
+                        <button onClick={handleSendPrompt} disabled={isLoading}>
+                            {isLoading ? "GPT 요청 중..." : "GPT 요청 보내기"}
+                        </button>
                     </div>
+
+                    {/* ✅ JSON 데이터 확인 버튼 */}
+                    <div style={{ marginTop: "10px" }}>
+                        <button onClick={handleShowJson}>JSON 데이터 확인</button>
+                    </div>
+
+                    {/* ✅ JSON 데이터 모달 추가 */}
+                    <JsonModal
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        jsonData={jsonData}
+                    />
+
                     <h3>응답:</h3>
-                    <p>{response}</p>
+                    <div>
+                        {selectedRows.map((rowIndex) => (
+                            <div key={rowIndex} style={{ marginBottom: "10px", padding: "10px", border: "1px solid #ddd" }}>
+                                <strong>지원자 {parseInt(rowIndex) + 1}:</strong> 
+                                {responses[rowIndex] ? (
+                                    <pre>{responses[rowIndex]}</pre>
+                                ) : (
+                                    <span>응답 대기 중...</span>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </>
             )}
         </div>
