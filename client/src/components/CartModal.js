@@ -43,7 +43,7 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
                         "지원자_ID": isFirstQuestion ? item.key_number : "",  // ✅ 같은 지원자는 첫 행에만 ID 추가
                         "자소서_ID": isFirstQuestion ? coverLetter.cover_letter_id : "", // ✅ 같은 자소서면 첫 행에만 ID 추가
                         "질문번호": index + 1,
-                        "질문": q.question,
+                        "질문": `(${index+1}) ${q.question}`,
                         "근거": originalText.slice(Math.max(0, q.clue_indices.start_index), q.clue_indices.end_index + 1), // ✅ 근거는 원본 그대로
                         "원본": isFirstQuestion ? modifiedOriginalText : ""  // ✅ 원본은 첫 번째 행에만 추가
                     });
