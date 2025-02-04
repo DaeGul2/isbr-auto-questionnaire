@@ -105,14 +105,17 @@ function App() {
         setIsModalOpen(true);
     };
 
-    const addToCart = (responseData) => {
-        if (cartItems.some(item => item.key_number === responseData.key_number)) {
-            alert("이미 추가된 질문입니다!");
+    const handleAddToCart = (parsedResponse) => {
+        if (!parsedResponse || !parsedResponse.key_number) return;
+
+        const isAlreadyAdded = cartItems.some(item => item.key_number === parsedResponse.key_number);
+        if (isAlreadyAdded) {
+            alert("이미 추가된 지원자의 질문입니다.");
             return;
         }
 
-        setCartItems([...cartItems, responseData]);
-        alert("질문이 카트에 추가되었습니다!");
+        setCartItems([...cartItems, parsedResponse]);
+        alert("질문이 카트에 추가되었습니다.");
     };
 
     return (
@@ -167,6 +170,7 @@ function App() {
 
                     <JsonModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} jsonData={jsonData} />
 
+                    {/* ✅ 진행 바 (로딩 상태) */}
                     {isLoading && (
                         <div style={{ marginTop: "20px" }}>
                             <progress value={progress} max="100"></progress>
@@ -177,43 +181,31 @@ function App() {
                     <h3>응답:</h3>
                     <div>
                         {selectedRows.map((rowIndex) => (
-                            <div key={rowIndex} style={{
-                                marginBottom: "10px",
-                                padding: "10px",
-                                border: "1px solid #ddd",
-                                backgroundColor: "#f9f9f9",
-                                borderRadius: "10px"
-                            }}>
-                                <strong>지원자 ID: {parsedResponses[rowIndex]?.key_number || "❌ 없음"}</strong> 
+                            <div key={rowIndex} style={{ marginBottom: "20px", padding: "15px", border: "1px solid #ddd", borderRadius: "8px", backgroundColor: "#f9f9f9" }}>
+                                <h3>🆔 지원자 ID: {parsedResponses[rowIndex]?.key_number || "N/A"}</h3>
+                                
                                 {parsedResponses[rowIndex] ? (
-                                    <div>
-                                        {Object.entries(parsedResponses[rowIndex]).map(([key, value]) => (
-                                            key !== "key_number" && (
-                                                <p key={key}><strong>{key}:</strong> {value}</p>
-                                            )
-                                        ))}
-                                        <button 
-                                            onClick={() => addToCart(parsedResponses[rowIndex])} 
-                                            disabled={cartItems.some(item => item.key_number === parsedResponses[rowIndex].key_number)}
-                                        >
-                                            {cartItems.some(item => item.key_number === parsedResponses[rowIndex].key_number) 
-                                                ? "✅ 추가됨" 
-                                                : "➕ 카트에 추가"}
-                                        </button>
-                                    </div>
+                                    parsedResponses[rowIndex].cover_letters.map((coverLetter, cIndex) => (
+                                        <div key={cIndex} style={{ marginBottom: "10px", padding: "10px", border: "1px solid #ccc", borderRadius: "8px", backgroundColor: "#ffffff" }}>
+                                            <h4>📄 자기소개서 {coverLetter.cover_letter_id}</h4>
+                                            {coverLetter.questions.map((q, qIndex) => (
+                                                <div key={qIndex} style={{ marginBottom: "10px", padding: "8px", backgroundColor: "#e6f7ff", borderRadius: "5px" }}>
+                                                    <p><strong>✅ 질문:</strong> {q.question}</p>
+                                                    <p><strong>🔍 근거:</strong> {q.clue}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))
                                 ) : (
                                     <span>응답 대기 중...</span>
                                 )}
+
+                                <button onClick={() => handleAddToCart(parsedResponses[rowIndex])} style={{ marginTop: "10px", backgroundColor: "#0073e6", color: "white" }}>🛒 카트에 추가</button>
                             </div>
                         ))}
                     </div>
 
-                    <button 
-                        style={{ position: "fixed", bottom: "20px", right: "20px", backgroundColor: "#007bff", color: "white" }}
-                        onClick={() => setIsCartOpen(true)}
-                    >
-                        🛒 카트 ({cartItems.length})
-                    </button>
+                    <button onClick={() => setIsCartOpen(true)} style={{ position: "fixed", bottom: "20px", right: "20px", padding: "10px", backgroundColor: "#ff5722", color: "white" }}>🛒 카트 보기</button>
 
                     <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} />
                 </>
