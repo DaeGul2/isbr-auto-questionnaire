@@ -2,38 +2,89 @@ import React from "react";
 import * as XLSX from "xlsx";
 
 const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
-    console.log(cartItems)
+    
     if (!isOpen) return null;
-
+    console.log(cartItems)
     // ✅ Excel 다운로드 함수 수정 (모든 지원자의 데이터를 포함하도록 수정)
     const handleDownloadExcel = () => {
         if (cartItems.length === 0) {
             alert("카트에 저장된 질문이 없습니다.");
             return;
         }
-
-        const flattenedData = cartItems.flatMap(item => {
-            return item.cover_letters.map(coverLetter => {
-                return coverLetter.questions.map((q, index) => ({
-                    지원자_ID: item.key_number,
-                    자기소개서_번호: coverLetter.cover_letter_id,
-                    질문번호: index + 1,
-                    질문: q.question,
-                    근거: q.clue  // ✅ Clue가 올바르게 표시되도록 처리
-                }));
+    
+        // ✅ 엑셀 데이터 구조화 (지원자_ID → 자소서_ID 그룹화)
+        const formattedData = [];
+        const mergeRanges = [];  // 병합 범위 저장용
+        let rowIndex = 1; // 엑셀 헤더 다음 행부터 시작 (엑셀은 1-based index)
+    
+        cartItems.forEach(item => {
+            item.cover_letters.forEach(coverLetter => {
+                let isFirstQuestion = true; // ✅ 첫 번째 질문 여부 확인
+                let originalText = coverLetter.originalText; // 원본 자소서 텍스트
+                let indexOffset = 0; // ✅ 인덱스 보정 값 (숫자 추가로 인한 밀림 방지)
+    
+                // ✅ 원본 텍스트에만 숫자 삽입 (근거에는 삽입 X)
+                let modifiedOriginalText = originalText;
+                coverLetter.questions.forEach((q, index) => {
+                    let startIdx = q.clue_indices.start_index + indexOffset;  // ✅ 한 칸 뒤로 조정
+    
+                    const questionMarker = `(${index + 1})`;
+    
+                    // ✅ 원본 텍스트에 번호 삽입
+                    modifiedOriginalText = modifiedOriginalText.slice(0, startIdx) + questionMarker + modifiedOriginalText.slice(startIdx);
+    
+                    // ✅ 인덱스 밀림 방지 (삽입된 문자열 길이만큼 오프셋 증가)
+                    indexOffset += questionMarker.length;
+                });
+    
+                coverLetter.questions.forEach((q, index) => {
+                    formattedData.push({
+                        "지원자_ID": isFirstQuestion ? item.key_number : "",  // ✅ 같은 지원자는 첫 행에만 ID 추가
+                        "자소서_ID": isFirstQuestion ? coverLetter.cover_letter_id : "", // ✅ 같은 자소서면 첫 행에만 ID 추가
+                        "질문번호": index + 1,
+                        "질문": q.question,
+                        "근거": originalText.slice(Math.max(0, q.clue_indices.start_index), q.clue_indices.end_index + 1), // ✅ 근거는 원본 그대로
+                        "원본": isFirstQuestion ? modifiedOriginalText : ""  // ✅ 원본은 첫 번째 행에만 추가
+                    });
+    
+                    isFirstQuestion = false;
+                });
+    
+                // ✅ 같은 지원자의 같은 자소서 그룹 병합을 위한 인덱스 계산
+                if (coverLetter.questions.length > 1) {
+                    const startRow = rowIndex;
+                    const endRow = rowIndex + coverLetter.questions.length - 1;
+    
+                    // ✅ 지원자_ID 병합
+                    mergeRanges.push({ s: { r: startRow, c: 0 }, e: { r: endRow, c: 0 } });
+    
+                    // ✅ 자소서_ID 병합
+                    mergeRanges.push({ s: { r: startRow, c: 1 }, e: { r: endRow, c: 1 } });
+    
+                    // ✅ 원본 병합
+                    mergeRanges.push({ s: { r: startRow, c: 5 }, e: { r: endRow, c: 5 } });
+                }
+    
+                rowIndex += coverLetter.questions.length; // 다음 그룹 시작 위치 업데이트
             });
-        }).flat();
-
-        const worksheet = XLSX.utils.json_to_sheet(flattenedData);
+        });
+    
+        // ✅ 엑셀 생성 및 병합 처리
+        const worksheet = XLSX.utils.json_to_sheet(formattedData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "GPT_Questions");
-
+    
+        // ✅ 병합 범위 추가
+        worksheet["!merges"] = mergeRanges;
+    
         const fileName = prompt("저장할 파일명을 입력하세요", "GPT_Questions.xlsx");
         if (fileName) {
             XLSX.writeFile(workbook, fileName);
         }
     };
-
+    
+    
+    
     // ✅ 개별 질문 삭제 함수 (수정됨)
     const handleRemoveQuestion = (key_number, cover_letter_id, questionIndex) => {
         if (!setCartItems) {
