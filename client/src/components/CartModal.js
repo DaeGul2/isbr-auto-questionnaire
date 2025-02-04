@@ -173,13 +173,13 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
                                 <div key={cIdx} style={{ padding: "10px", backgroundColor: "#f8f8f8", borderRadius: "5px", marginBottom: "10px" }}>
                                     <h4>📄 자기소개서 {coverLetter.cover_letter_id}</h4>
                                     {coverLetter.questions.map((q, qIdx) => (
-                                        <div key={qIdx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 10px", backgroundColor: "#e6f7ff", borderRadius: "5px", marginBottom: "5px" }}>
-                                            <p style={{ margin: 0 }}>🔹 {q.question}</p>
-                                            <button 
-                                                onClick={() => handleRemoveQuestion(item.key_number, coverLetter.cover_letter_id, qIdx)}
-                                                style={{ backgroundColor: "#ff4d4d", color: "white", border: "none", borderRadius: "5px", padding: "4px 8px", cursor: "pointer" }}>
+                                        <div key={qIdx} style={{ padding: "8px", backgroundColor: "#e6f7ff", borderRadius: "5px", marginBottom: "8px", position: "relative" }}>
+                                            <button onClick={() => handleRemoveQuestion(item.key_number, coverLetter.cover_letter_id, qIdx)}
+                                                style={{ position: "absolute", top: "5px", right: "5px", backgroundColor: "red", color: "white", border: "none", padding: "5px", borderRadius: "5px", cursor: "pointer" }}>
                                                 ❌
                                             </button>
+                                            <p><strong>✅ 질문:</strong> {q.question}</p>
+                                            <p><strong>🔍 근거:</strong> {coverLetter.originalText.slice(q.clue_indices.start_index, q.clue_indices.end_index + 1)}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -187,7 +187,6 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
                         </div>
                     ))}
                 </div>
-
                 <button onClick={handleDownloadExcel}>📥 Excel 다운로드</button>
                 <button onClick={onClose}>닫기</button>
             </div>
