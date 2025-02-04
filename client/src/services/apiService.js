@@ -35,7 +35,7 @@ const RESPONSE_FORMAT = `
 {
   "key_number": "지원자 식별번호",
   "cover_letter_num": 질문을 만들 자소서 개수,
-  "question_num": 각 자소서별 만들 질문 개수,
+  "question_num": 각 자소서별 만들 질문 개수 , // 배열 아님. 정수값 하나임
   "question1-1": "1번 자소서에 대한 질문 1",
   "question1-2": "1번 자소서에 대한 질문 2",
   "clue1-1": { "start_index": 55, "end_index": 120 }, // 1번 질문의 근거 출처 인덱스
