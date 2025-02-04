@@ -193,14 +193,25 @@ def generate_ppt():
     file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(file_path)
 
-    # ✅ 질문 목록 JSON으로 변환
-    id_to_text = json.loads(request.form["id_to_text"])
+    id_to_text = json.loads(request.form["id_to_text"])  # ✅ 질문 데이터 파싱
 
     # ✅ PPT 생성
     output_pptx_path = os.path.join(app.config["OUTPUT_FOLDER"], "output.pptx")
     create_ppt(file_path, output_pptx_path, id_to_text)
 
-    return send_file(output_pptx_path, as_attachment=True)
+    return jsonify({"ppt_url": "http://localhost:5000/download_ppt"}), 200
+
+
+# ✅ PPT 파일 다운로드 엔드포인트 추가
+@app.route("/download_ppt", methods=["GET"])
+def download_ppt():
+    ppt_path = os.path.join(app.config["OUTPUT_FOLDER"], "output.pptx")
+
+    if not os.path.exists(ppt_path):
+        return jsonify({"error": "PPT 파일을 찾을 수 없습니다."}), 404
+
+    return send_file(ppt_path, as_attachment=True, download_name="output.pptx")
+
 
 # ✅ 서버 실행
 if __name__ == "__main__":
