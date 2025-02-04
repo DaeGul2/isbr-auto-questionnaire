@@ -55,7 +55,7 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
                             ...q,
                             clue_indices: {
                                 start_index: startIdx,
-                                end_index: endIdx + questionMarker.length // 밀림 방지
+                                end_index: endIdx + questionMarker.length
                             }
                         };
                     });
@@ -130,6 +130,31 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
         }
     };
 
+    // ✅ 질문 개별 삭제 기능
+    const handleRemoveQuestion = (key_number, cover_letter_id, questionIndex) => {
+        if (!setCartItems) return;
+        const updatedCart = cartItems
+            .map(item => {
+                if (item.key_number === key_number) {
+                    return {
+                        ...item,
+                        cover_letters: item.cover_letters
+                            .map(coverLetter => {
+                                if (coverLetter.cover_letter_id === cover_letter_id) {
+                                    const updatedQuestions = coverLetter.questions.filter((_, index) => index !== questionIndex);
+                                    return updatedQuestions.length > 0 ? { ...coverLetter, questions: updatedQuestions } : null;
+                                }
+                                return coverLetter;
+                            })
+                            .filter(Boolean)
+                    };
+                }
+                return item;
+            })
+            .filter(item => item.cover_letters.length > 0);
+        setCartItems(updatedCart);
+    };
+
     return (
         <div style={{
             position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.5)",
@@ -139,8 +164,32 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
                 <h2>🛒 질문 카트</h2>
                 <p>현재 저장된 지원자 수: {new Set(cartItems.map(item => item.key_number)).size}</p>
 
-                <button onClick={handleDownloadExcel} style={{ marginTop: "10px", backgroundColor: "green", color: "white", padding: "10px", borderRadius: "5px", width: "100%" }}>📥 Excel 다운로드</button>
-                <button onClick={onClose} style={{ marginTop: "10px", backgroundColor: "gray", color: "white", padding: "10px", borderRadius: "5px", width: "100%" }}>닫기</button>
+                {/* ✅ 카트 내용 표시 UI */}
+                <div style={{ maxHeight: "300px", overflowY: "auto", marginBottom: "10px", padding: "10px", border: "1px solid #ddd", borderRadius: "5px" }}>
+                    {cartItems.map((item, idx) => (
+                        <div key={idx} style={{ marginBottom: "15px" }}>
+                            <h3>🆔 지원자 ID: {item.key_number}</h3>
+                            {item.cover_letters.map((coverLetter, cIdx) => (
+                                <div key={cIdx} style={{ padding: "10px", backgroundColor: "#f8f8f8", borderRadius: "5px", marginBottom: "10px" }}>
+                                    <h4>📄 자기소개서 {coverLetter.cover_letter_id}</h4>
+                                    {coverLetter.questions.map((q, qIdx) => (
+                                        <div key={qIdx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 10px", backgroundColor: "#e6f7ff", borderRadius: "5px", marginBottom: "5px" }}>
+                                            <p style={{ margin: 0 }}>🔹 {q.question}</p>
+                                            <button 
+                                                onClick={() => handleRemoveQuestion(item.key_number, coverLetter.cover_letter_id, qIdx)}
+                                                style={{ backgroundColor: "#ff4d4d", color: "white", border: "none", borderRadius: "5px", padding: "4px 8px", cursor: "pointer" }}>
+                                                ❌
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+
+                <button onClick={handleDownloadExcel}>📥 Excel 다운로드</button>
+                <button onClick={onClose}>닫기</button>
             </div>
         </div>
     );
