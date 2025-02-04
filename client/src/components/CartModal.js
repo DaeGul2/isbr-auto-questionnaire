@@ -30,41 +30,56 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
             item.cover_letters.forEach(coverLetter => {
                 let isFirstQuestion = true;
                 let originalText = coverLetter.originalText;
-                let indexOffset = 0;  // ✅ 인덱스 밀림 방지
+                let indexOffset = 0;
 
                 // ✅ 중복 방지를 위한 밑줄 범위 조정
                 let mergedClues = [];
                 let currentStart = null;
                 let currentEnd = null;
 
-                coverLetter.questions
+                // ✅ 번호 삽입 후 start_index, end_index 보정
+                let updatedQuestions = coverLetter.questions
                     .sort((a, b) => a.clue_indices.start_index - b.clue_indices.start_index)
-                    .forEach((q, index) => {
+                    .map((q, index) => {
                         let startIdx = q.clue_indices.start_index + indexOffset;
                         let endIdx = q.clue_indices.end_index + indexOffset;
-
                         const questionMarker = `(${index + 1})`;
+
+                        // ✅ 원본 텍스트에 번호 삽입
                         originalText = originalText.slice(0, startIdx) + questionMarker + originalText.slice(startIdx);
+
+                        // ✅ 인덱스 보정 (삽입한 문자 길이 반영)
                         indexOffset += questionMarker.length;
 
-                        // ✅ 겹치는 범위를 합치기
-                        if (currentStart === null) {
-                            currentStart = startIdx;
-                            currentEnd = endIdx;
-                        } else if (startIdx <= currentEnd) {
-                            currentEnd = Math.max(currentEnd, endIdx);
-                        } else {
-                            mergedClues.push({ start: currentStart, end: currentEnd });
-                            currentStart = startIdx;
-                            currentEnd = endIdx;
-                        }
+                        return {
+                            ...q,
+                            clue_indices: {
+                                start_index: startIdx,
+                                end_index: endIdx + questionMarker.length // 밀림 방지
+                            }
+                        };
                     });
+
+                // ✅ 근거 구역 병합
+                updatedQuestions.forEach(q => {
+                    let { start_index, end_index } = q.clue_indices;
+                    if (currentStart === null) {
+                        currentStart = start_index;
+                        currentEnd = end_index;
+                    } else if (start_index <= currentEnd) {
+                        currentEnd = Math.max(currentEnd, end_index);
+                    } else {
+                        mergedClues.push({ start: currentStart, end: currentEnd });
+                        currentStart = start_index;
+                        currentEnd = end_index;
+                    }
+                });
 
                 if (currentStart !== null) {
                     mergedClues.push({ start: currentStart, end: currentEnd });
                 }
 
-                coverLetter.questions.forEach((q, index) => {
+                updatedQuestions.forEach((q, index) => {
                     let row = worksheet.addRow({
                         "지원자_ID": isFirstQuestion ? item.key_number : "",
                         "자소서_ID": isFirstQuestion ? coverLetter.cover_letter_id : "",
