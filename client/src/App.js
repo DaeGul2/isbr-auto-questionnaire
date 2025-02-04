@@ -3,7 +3,7 @@ import FileUpload from "./components/FileUpload";
 import DataTable from "./components/DataTable";
 import KeySelection from "./components/KeySelection";
 import JsonModal from "./components/JsonModal";
-import CartModal from "./components/CartModal"; // ✅ 질문 카트 모달 추가
+import CartModal from "./components/CartModal";
 import { sendPrompt } from "./services/apiService";
 import { parseGPTResponse } from "./utils/parseGPTResponse";
 
@@ -21,8 +21,8 @@ function App() {
     const [progress, setProgress] = useState(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [jsonData, setJsonData] = useState([]);
-    const [cartItems, setCartItems] = useState([]); // ✅ 카트 저장소
-    const [isCartOpen, setIsCartOpen] = useState(false); // ✅ 카트 모달 상태
+    const [cartItems, setCartItems] = useState([]);
+    const [isCartOpen, setIsCartOpen] = useState(false);
 
     const handleFileUpload = (headers, rows) => {
         setHeaders(headers);
@@ -105,10 +105,14 @@ function App() {
         setIsModalOpen(true);
     };
 
-    // ✅ 질문 카트에 추가
-    const handleAddToCart = (questionData) => {
-        setCartItems((prevCart) => [...prevCart, questionData]);
-        alert("추가되었습니다.");
+    const addToCart = (responseData) => {
+        if (cartItems.some(item => item.key_number === responseData.key_number)) {
+            alert("이미 추가된 질문입니다!");
+            return;
+        }
+
+        setCartItems([...cartItems, responseData]);
+        alert("질문이 카트에 추가되었습니다!");
     };
 
     return (
@@ -173,25 +177,44 @@ function App() {
                     <h3>응답:</h3>
                     <div>
                         {selectedRows.map((rowIndex) => (
-                            <div key={rowIndex} style={{ marginBottom: "10px", padding: "10px", border: "1px solid #ddd" }}>
-                                <strong>지원자 {parseInt(rowIndex) + 1}:</strong> 
-                                {responses[rowIndex] && (
-                                    <button onClick={() => handleAddToCart(parsedResponses[rowIndex])}>🛒 추가</button>
-                                )}
-
-                                {parsedResponses[rowIndex] && (
-                                    <pre>{JSON.stringify(parsedResponses[rowIndex], null, 2)}</pre>
+                            <div key={rowIndex} style={{
+                                marginBottom: "10px",
+                                padding: "10px",
+                                border: "1px solid #ddd",
+                                backgroundColor: "#f9f9f9",
+                                borderRadius: "10px"
+                            }}>
+                                <strong>지원자 ID: {parsedResponses[rowIndex]?.key_number || "❌ 없음"}</strong> 
+                                {parsedResponses[rowIndex] ? (
+                                    <div>
+                                        {Object.entries(parsedResponses[rowIndex]).map(([key, value]) => (
+                                            key !== "key_number" && (
+                                                <p key={key}><strong>{key}:</strong> {value}</p>
+                                            )
+                                        ))}
+                                        <button 
+                                            onClick={() => addToCart(parsedResponses[rowIndex])} 
+                                            disabled={cartItems.some(item => item.key_number === parsedResponses[rowIndex].key_number)}
+                                        >
+                                            {cartItems.some(item => item.key_number === parsedResponses[rowIndex].key_number) 
+                                                ? "✅ 추가됨" 
+                                                : "➕ 카트에 추가"}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <span>응답 대기 중...</span>
                                 )}
                             </div>
                         ))}
                     </div>
 
-                    {/* ✅ 플로팅 카트 버튼 */}
-                    <button onClick={() => setIsCartOpen(true)} style={{ position: "fixed", bottom: "20px", right: "20px", background: "blue", color: "white" }}>
-                        🛒 질문 카트 ({cartItems.length})
+                    <button 
+                        style={{ position: "fixed", bottom: "20px", right: "20px", backgroundColor: "#007bff", color: "white" }}
+                        onClick={() => setIsCartOpen(true)}
+                    >
+                        🛒 카트 ({cartItems.length})
                     </button>
 
-                    {/* ✅ 카트 모달 */}
                     <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} />
                 </>
             )}
