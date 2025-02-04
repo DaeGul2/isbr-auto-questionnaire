@@ -16,6 +16,14 @@ df = pd.read_excel(excel_path)
 # ✅ PowerPoint 프레젠테이션 생성
 prs = Presentation()
 
+# ✅ 자소서_ID 값에 따라 설정할 텍스트
+id_to_text = {
+    1: "질문1에 해당하는 값",
+    2: "질문2에 해당하는 값",
+    3: "질문3에 해당하는 값",
+    4: "질문4에 해당하는 값"
+}
+
 # ✅ 슬라이드별 데이터 처리
 for _, row in df.iterrows():
     slide = prs.slides.add_slide(prs.slide_layouts[5])  # 백지 슬라이드
@@ -25,7 +33,7 @@ for _, row in df.iterrows():
     text_frame = text_box.text_frame
     text_frame.clear()
     p = text_frame.add_paragraph()
-    p.text = f"지원자 ID: {row['지원자_ID']}"
+    p.text = f"수험번호: {row['지원자_ID']}"
     p.font.size = Pt(12)
     p.font.bold = True
     p.font.name = "맑은 고딕"
@@ -40,6 +48,21 @@ for _, row in df.iterrows():
     p.text = "자기소개서"
     p.font.size = Pt(14)
     p.font.bold = True
+    p.font.color.rgb = RGBColor(0, 0, 0)
+    p.font.name = "맑은 고딕"
+    p.alignment = PP_ALIGN.LEFT
+
+      # ✅ 자소서_ID 값에 따라 텍스트 추가 (소제목과 원본 사이)
+    description_y = title_y + 0.5  # ✅ 자기소개서 제목과 원본 사이
+    description_text = id_to_text.get(row["자소서_ID"], "기본값")  # ✅ 기본값 설정
+
+    text_box = slide.shapes.add_textbox(Inches(0.5), Inches(description_y), Inches(6), Inches(0.5))
+    text_frame = text_box.text_frame
+    text_frame.clear()
+    p = text_frame.add_paragraph()
+    p.text = description_text
+    p.font.size = Pt(11)  # ✅ 11pt
+    p.font.bold = True  # ✅ Bold
     p.font.color.rgb = RGBColor(0, 0, 0)
     p.font.name = "맑은 고딕"
     p.alignment = PP_ALIGN.LEFT
