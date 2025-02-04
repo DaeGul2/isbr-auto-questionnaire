@@ -54,40 +54,40 @@ function App() {
         }
 
         setIsLoading(true);
-    setProgress(0);
-    const totalRequests = selectedRows.length;
-    const newResponses = {};
-    const newParsedResponses = {};
+        setProgress(0);
+        const totalRequests = selectedRows.length;
+        const newResponses = {};
+        const newParsedResponses = {};
 
-    for (let i = 0; i < totalRequests; i++) {
-        const rowIndex = selectedRows[i];
-        const selectedRow = { key_number: data[rowIndex][keyColumn] };
-        selectedColumns.forEach((col) => {
-            selectedRow[col] = data[rowIndex][col];
-        });
+        for (let i = 0; i < totalRequests; i++) {
+            const rowIndex = selectedRows[i];
+            const selectedRow = { key_number: data[rowIndex][keyColumn] };
+            selectedColumns.forEach((col) => {
+                selectedRow[col] = data[rowIndex][col];
+            });
 
-        const coverLetterText = selectedColumns.map(col => data[rowIndex][col]);
+            const coverLetterText = selectedColumns.map(col => data[rowIndex][col]);
 
-        try {
-            const result = await sendPrompt(selectedRow, userRequest, secretPassword);
-            newResponses[rowIndex] = result.message;
+            try {
+                const result = await sendPrompt(selectedRow, userRequest, secretPassword);
+                newResponses[rowIndex] = result.message;
 
-            const parsedResult = parseGPTResponse(result.message, coverLetterText);
-            newParsedResponses[rowIndex] = {
-                ...parsedResult,
-                originalText: coverLetterText  // 각 자기소개서의 원본 텍스트 저장
-            };
-        } catch (error) {
-            newResponses[rowIndex] = "API 요청 오류 발생";
-            newParsedResponses[rowIndex] = {};
+                const parsedResult = parseGPTResponse(result.message, coverLetterText);
+                newParsedResponses[rowIndex] = {
+                    ...parsedResult,
+                    originalText: coverLetterText  // 각 자기소개서의 원본 텍스트 저장
+                };
+            } catch (error) {
+                newResponses[rowIndex] = "API 요청 오류 발생";
+                newParsedResponses[rowIndex] = {};
+            }
+
+            setResponses({ ...newResponses });
+            setParsedResponses({ ...newParsedResponses });
+            setProgress(((i + 1) / totalRequests) * 100);
         }
 
-        setResponses({ ...newResponses });
-        setParsedResponses({ ...newParsedResponses });
-        setProgress(((i + 1) / totalRequests) * 100);
-    }
-
-    setIsLoading(false);
+        setIsLoading(false);
     };
 
     const handleShowJson = () => {
@@ -116,6 +116,7 @@ function App() {
             alert("이미 추가된 지원자의 질문입니다.");
             return;
         }
+        console.log("parsed : ",parsedResponse);
 
         setCartItems([...cartItems, parsedResponse]);
         alert("질문이 카트에 추가되었습니다.");
@@ -192,25 +193,20 @@ function App() {
                                 <button onClick={() => handleAddToCart(parsedResponses[rowIndex])} style={{ marginTop: "10px", backgroundColor: "#0073e6", color: "white" }}>
                                     🛒 카트에 추가
                                 </button>
+                                {parsedResponses[rowIndex]?.cover_letters.map((coverLetter, cIndex) => (
+                                    <div key={cIndex} style={{ marginBottom: "10px", padding: "10px", border: "1px solid #ccc", borderRadius: "8px", backgroundColor: "#ffffff" }}>
+                                        <h4>📄 자기소개서 {coverLetter.cover_letter_id}</h4>
+                                        
+                                        <p><strong>원본 자기소개서:</strong> {parsedResponses[rowIndex].originalText[cIndex]}</p>
+                                        {coverLetter.questions.map((q, qIndex) => (
+                                            <div key={qIndex} style={{ marginBottom: "10px", padding: "8px", backgroundColor: "#e6f7ff", borderRadius: "5px" }}>
+                                                <p><strong>✅ 질문:</strong> {q.question}</p>
+                                                <p><strong>🔍 근거:</strong> {parsedResponses[rowIndex].originalText[cIndex].slice(Math.max(0, q.clue_indices.start_index), q.clue_indices.end_index + 1)}</p>
 
-                                {parsedResponses[rowIndex] ? (
-                                    parsedResponses[rowIndex].cover_letters.map((coverLetter, cIndex) => (
-                                        <div key={cIndex} style={{ marginBottom: "10px", padding: "10px", border: "1px solid #ccc", borderRadius: "8px", backgroundColor: "#ffffff" }}>
-
-                                            <h4>📄 자기소개서 {coverLetter.cover_letter_id}</h4>
-                                            <p><strong>원본 자기소개서:</strong> {parsedResponses[rowIndex].originalText[cIndex]}</p>
-                                            {coverLetter.questions.map((q, qIndex) => (
-                                                <div key={qIndex} style={{ marginBottom: "10px", padding: "8px", backgroundColor: "#e6f7ff", borderRadius: "5px" }}>
-                                                    <p><strong>✅ 질문:</strong> {q.question}</p>
-                                                    <p><strong>🔍 근거:</strong> {q.clue}</p>
-                                                </div>
-                                            ))}
-
-                                        </div>
-                                    ))
-                                ) : (
-                                    <span>응답 대기 중...</span>
-                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ))}
                             </div>
                         ))}
                     </div>

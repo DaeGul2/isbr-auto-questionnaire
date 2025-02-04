@@ -2,6 +2,7 @@ import React from "react";
 import * as XLSX from "xlsx";
 
 const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
+    console.log(cartItems)
     if (!isOpen) return null;
 
     // ✅ Excel 다운로드 함수 수정 (모든 지원자의 데이터를 포함하도록 수정)
@@ -85,9 +86,9 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
                                     {coverLetter.questions.map((q, qIndex) => (
                                         <div key={qIndex} style={{ marginBottom: "10px", padding: "8px", backgroundColor: "#e6f7ff", borderRadius: "5px", position: "relative" }}>
                                             <p><strong>✅ 질문:</strong> {q.question}</p>
-                                            <p><strong>🔍 근거:</strong> {q.clue}</p>
-                                            <button 
-                                                onClick={() => handleRemoveQuestion(item.key_number, coverLetter.cover_letter_id, qIndex)} 
+                                            <p><strong>🔍 근거:</strong> {coverLetter.originalText.slice(Math.max(0, q.clue_indices.start_index), q.clue_indices.end_index + 1)}</p>
+                                            <button
+                                                onClick={() => handleRemoveQuestion(item.key_number, coverLetter.cover_letter_id, qIndex)}
                                                 style={{ position: "absolute", top: "5px", right: "5px", backgroundColor: "#ff4d4d", color: "white", border: "none", borderRadius: "5px", padding: "4px 8px", cursor: "pointer" }}
                                             >
                                                 ❌ 삭제
