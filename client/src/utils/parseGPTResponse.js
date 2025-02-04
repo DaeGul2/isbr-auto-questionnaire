@@ -1,4 +1,4 @@
-export const parseGPTResponse = (response) => {
+export const parseGPTResponse = (response, coverLetterText) => {
     try {
         // ✅ 마크다운 형식 제거 (```json 제거)
         const cleanResponse = response.replace(/```json|```/g, "").trim();
@@ -31,9 +31,22 @@ export const parseGPTResponse = (response) => {
                 let clueKey = `clue${i}-${j}`;
 
                 if (parsed[questionKey]) {
+                    let clue = parsed[clueKey] || { start_index: null, end_index: null };
+                    let extractedText = "근거 없음";
+
+                    // ✅ 원본 자기소개서에서 인덱스 범위에 해당하는 텍스트 추출
+                    if (
+                        clue.start_index !== null &&
+                        clue.end_index !== null &&
+                        coverLetterText[i - 1] // 해당 자기소개서 텍스트 존재하는지 확인
+                    ) {
+                        extractedText = coverLetterText[i - 1].slice(clue.start_index, clue.end_index + 1);
+                    }
+
                     coverLetter.questions.push({
                         question: parsed[questionKey],
-                        clue: parsed[clueKey] || "근거 없음"
+                        clue: extractedText, // ✅ 인덱스로 찾은 원본 텍스트
+                        clue_indices: clue // ✅ start_index, end_index 저장
                     });
                 }
             }

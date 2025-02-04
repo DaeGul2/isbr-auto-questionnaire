@@ -17,7 +17,7 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
                     자기소개서_번호: coverLetter.cover_letter_id,
                     질문번호: index + 1,
                     질문: q.question,
-                    근거: q.clue
+                    근거: q.clue_text // ✅ 슬라이싱된 근거 텍스트만 포함
                 }));
             });
         }).flat();
@@ -65,18 +65,20 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
 
                 <div style={{ maxHeight: "400px", overflowY: "auto" }}>
                     {cartItems.map((item, index) => (
-                        <div key={index} style={{ border: "1px solid #ddd", padding: "10px", marginBottom: "10px", borderRadius: "8px" }}>
-                            <h3>🆔 지원자 ID: {item.key_number}</h3>
+                        <div key={index} style={{ border: "1px solid #ddd", padding: "10px", marginBottom: "10px", borderRadius: "8px", backgroundColor: "#f9f9f9" }}>
+                            <h3>🆔 지원자 ID: <span style={{ fontWeight: "bold", color: "#0073e6" }}>{item.key_number}</span></h3>
                             {item.cover_letters.map((coverLetter, cIndex) => (
-                                <div key={cIndex} style={{ padding: "10px", backgroundColor: "#f9f9f9", borderRadius: "6px", marginBottom: "10px" }}>
+                                <div key={cIndex} style={{ padding: "10px", backgroundColor: "#ffffff", borderRadius: "6px", marginBottom: "10px", border: "1px solid #ccc" }}>
                                     <h4>📄 자기소개서 {coverLetter.cover_letter_id}</h4>
                                     {coverLetter.questions.map((q, qIndex) => (
-                                        <div key={qIndex} style={{ marginBottom: "10px", padding: "8px", backgroundColor: "#e6f7ff", borderRadius: "5px", position: "relative" }}>
-                                            <p><strong>✅ 질문:</strong> {q.question}</p>
-                                            <p><strong>🔍 근거:</strong> {q.clue}</p>
+                                        <div key={qIndex} style={{ marginBottom: "10px", padding: "12px", backgroundColor: "#e6f7ff", borderRadius: "5px" }}>
+                                            <p style={{ fontSize: "16px", fontWeight: "bold", color: "#0073e6" }}>✅ 질문:</p>
+                                            <p style={{ fontSize: "14px", marginBottom: "8px" }}>{q.question}</p>
+                                            <p style={{ fontSize: "16px", fontWeight: "bold", color: "#0073e6" }}>🔍 근거:</p>
+                                            <p style={{ fontSize: "14px", backgroundColor: "#f0f0f0", padding: "8px", borderRadius: "5px" }}>{q.clue_text}</p>
                                             <button 
                                                 onClick={() => handleRemoveQuestion(item.key_number, coverLetter.cover_letter_id, qIndex)} 
-                                                style={{ position: "absolute", top: "5px", right: "5px", backgroundColor: "#ff4d4d", color: "white", border: "none", borderRadius: "5px", padding: "4px 8px", cursor: "pointer" }}
+                                                style={{ marginTop: "8px", backgroundColor: "#ff4d4d", color: "white", padding: "6px 12px", borderRadius: "5px", width: "100%", border: "none", cursor: "pointer" }}
                                             >
                                                 ❌ 삭제
                                             </button>
@@ -88,8 +90,8 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
                     ))}
                 </div>
 
-                <button onClick={handleDownloadExcel} style={{ marginTop: "10px", backgroundColor: "green", color: "white", padding: "10px", borderRadius: "5px", width: "100%" }}>📥 Excel 다운로드</button>
-                <button onClick={onClose} style={{ marginTop: "10px", backgroundColor: "gray", color: "white", padding: "10px", borderRadius: "5px", width: "100%" }}>닫기</button>
+                <button onClick={handleDownloadExcel} style={{ marginTop: "10px", backgroundColor: "green", color: "white", padding: "10px", borderRadius: "5px", width: "100%", fontSize: "16px" }}>📥 Excel 다운로드</button>
+                <button onClick={onClose} style={{ marginTop: "10px", backgroundColor: "gray", color: "white", padding: "10px", borderRadius: "5px", width: "100%", fontSize: "16px" }}>닫기</button>
             </div>
         </div>
     );

@@ -70,8 +70,9 @@ function App() {
                 const result = await sendPrompt(selectedRow, userRequest, secretPassword);
                 newResponses[rowIndex] = result.message;
 
-                // ✅ 응답 파싱
-                newParsedResponses[rowIndex] = parseGPTResponse(result.message);
+                // ✅ 자기소개서 원본 포함하여 파싱
+                const coverLetterText = selectedColumns.map(col => data[rowIndex][col]); 
+                newParsedResponses[rowIndex] = parseGPTResponse(result.message, coverLetterText);
             } catch (error) {
                 newResponses[rowIndex] = "API 요청 오류 발생";
                 newParsedResponses[rowIndex] = {};
@@ -170,7 +171,6 @@ function App() {
 
                     <JsonModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} jsonData={jsonData} />
 
-                    {/* ✅ 진행 바 (로딩 상태) */}
                     {isLoading && (
                         <div style={{ marginTop: "20px" }}>
                             <progress value={progress} max="100"></progress>
@@ -191,7 +191,7 @@ function App() {
                                             {coverLetter.questions.map((q, qIndex) => (
                                                 <div key={qIndex} style={{ marginBottom: "10px", padding: "8px", backgroundColor: "#e6f7ff", borderRadius: "5px" }}>
                                                     <p><strong>✅ 질문:</strong> {q.question}</p>
-                                                    <p><strong>🔍 근거:</strong> {q.clue}</p>
+                                                    <p><strong>🔍 근거:</strong> {q.clue_text}</p>
                                                 </div>
                                             ))}
                                         </div>
