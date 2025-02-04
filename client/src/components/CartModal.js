@@ -33,25 +33,35 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
         }
     };
 
-    // ✅ 개별 질문 삭제 함수
+    // ✅ 개별 질문 삭제 함수 (수정됨)
     const handleRemoveQuestion = (key_number, cover_letter_id, questionIndex) => {
-        const updatedCart = cartItems.map(item => {
-            if (item.key_number === key_number) {
-                return {
-                    ...item,
-                    cover_letters: item.cover_letters.map(coverLetter => {
-                        if (coverLetter.cover_letter_id === cover_letter_id) {
-                            return {
-                                ...coverLetter,
-                                questions: coverLetter.questions.filter((_, index) => index !== questionIndex)
-                            };
-                        }
-                        return coverLetter;
-                    }).filter(coverLetter => coverLetter.questions.length > 0)
-                };
-            }
-            return item;
-        }).filter(item => item.cover_letters.length > 0);
+        if (!setCartItems) {
+            console.error("❌ setCartItems가 정의되지 않았습니다.");
+            return;
+        }
+
+        const updatedCart = cartItems
+            .map(item => {
+                if (item.key_number === key_number) {
+                    return {
+                        ...item,
+                        cover_letters: item.cover_letters
+                            .map(coverLetter => {
+                                if (coverLetter.cover_letter_id === cover_letter_id) {
+                                    // ✅ 특정 질문만 삭제
+                                    const updatedQuestions = coverLetter.questions.filter((_, index) => index !== questionIndex);
+
+                                    // ✅ 자기소개서 내 질문이 0개라면, 자기소개서 자체를 삭제
+                                    return updatedQuestions.length > 0 ? { ...coverLetter, questions: updatedQuestions } : null;
+                                }
+                                return coverLetter;
+                            })
+                            .filter(Boolean) // ✅ null인 자기소개서 필터링하여 삭제
+                    };
+                }
+                return item;
+            })
+            .filter(item => item.cover_letters.length > 0); // ✅ 자기소개서가 모두 삭제된 지원자는 제거
 
         setCartItems(updatedCart);
     };

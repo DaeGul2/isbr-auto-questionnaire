@@ -156,11 +156,11 @@ function App() {
 
                     {/* ✅ 비밀번호 입력 및 요청 버튼 복원 */}
                     <div>
-                        <input 
-                            type="password" 
-                            placeholder="API 비밀번호 입력" 
-                            value={secretPassword} 
-                            onChange={(e) => setSecretPassword(e.target.value)} 
+                        <input
+                            type="password"
+                            placeholder="API 비밀번호 입력"
+                            value={secretPassword}
+                            onChange={(e) => setSecretPassword(e.target.value)}
                         />
                         <button onClick={handleSendPrompt} disabled={isLoading}>
                             {isLoading ? "GPT 요청 중..." : "GPT 요청 보내기"}
@@ -188,13 +188,13 @@ function App() {
                             <div key={rowIndex} style={{ marginBottom: "20px", padding: "15px", border: "1px solid #ddd", borderRadius: "8px", backgroundColor: "#f9f9f9" }}>
                                 <h3>🆔 지원자 ID: {parsedResponses[rowIndex]?.key_number || "N/A"}</h3>
                                 <button onClick={() => handleAddToCart(parsedResponses[rowIndex])} style={{ marginTop: "10px", backgroundColor: "#0073e6", color: "white" }}>
-                                                🛒 카트에 추가
-                                            </button>
+                                    🛒 카트에 추가
+                                </button>
 
                                 {parsedResponses[rowIndex] ? (
                                     parsedResponses[rowIndex].cover_letters.map((coverLetter, cIndex) => (
                                         <div key={cIndex} style={{ marginBottom: "10px", padding: "10px", border: "1px solid #ccc", borderRadius: "8px", backgroundColor: "#ffffff" }}>
-                                            
+
                                             <h4>📄 자기소개서 {coverLetter.cover_letter_id}</h4>
                                             {coverLetter.questions.map((q, qIndex) => (
                                                 <div key={qIndex} style={{ marginBottom: "10px", padding: "8px", backgroundColor: "#e6f7ff", borderRadius: "5px" }}>
@@ -202,7 +202,7 @@ function App() {
                                                     <p><strong>🔍 근거:</strong> {q.clue}</p>
                                                 </div>
                                             ))}
-                                           
+
                                         </div>
                                     ))
                                 ) : (
@@ -212,26 +212,31 @@ function App() {
                         ))}
                     </div>
                     {/* ✅ 카트 플로팅 버튼 추가 */}
-<button 
-    onClick={() => setIsCartOpen(true)} 
-    style={{ 
-        position: "fixed", 
-        bottom: "20px", 
-        right: "20px", 
-        padding: "10px 15px",
-        backgroundColor: "#ff5722", 
-        color: "white", 
-        border: "none",
-        borderRadius: "8px", 
-        cursor: "pointer",
-        fontSize: "16px",
-        fontWeight: "bold"
-    }}
->
-    🛒 카트 보기
-</button>
+                    <button
+                        onClick={() => setIsCartOpen(true)}
+                        style={{
+                            position: "fixed",
+                            bottom: "20px",
+                            right: "20px",
+                            padding: "10px 15px",
+                            backgroundColor: "#ff5722",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "8px",
+                            cursor: "pointer",
+                            fontSize: "16px",
+                            fontWeight: "bold"
+                        }}
+                    >
+                        🛒 카트 보기
+                    </button>
 
-<CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} />
+                    <CartModal
+                        isOpen={isCartOpen}
+                        onClose={() => setIsCartOpen(false)}
+                        cartItems={cartItems}
+                        setCartItems={setCartItems} // ✅ setCartItems를 전달
+                    />
                 </>
             )}
         </div>
