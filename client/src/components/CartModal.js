@@ -20,7 +20,6 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
         worksheet.columns = [
             { header: "지원자_ID", key: "지원자_ID", width: 15 },
             { header: "자소서_ID", key: "자소서_ID", width: 10 },
-            { header: "질문번호", key: "질문번호", width: 10 },
             { header: "질문", key: "질문", width: 50 },
             { header: "근거", key: "근거", width: 50 },
             { header: "원본", key: "원본", width: 100 },
@@ -29,11 +28,15 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
 
         cartItems.forEach(item => {
             item.cover_letters.forEach(coverLetter => {
-                let isFirstQuestion = true;
+                let isFirstRow = true;
                 let originalText = coverLetter.originalText;
                 let indexOffset = 0;
 
-                // ✅ 중복 방지를 위한 밑줄 범위 조정
+                // ✅ 질문과 근거를 개행으로 묶음
+                let questionTexts = [];
+                let evidenceTexts = [];
+
+                // ✅ 밑줄 범위 병합
                 let mergedClues = [];
                 let currentStart = null;
                 let currentEnd = null;
@@ -52,6 +55,10 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
                         // ✅ 인덱스 보정 (삽입한 문자 길이 반영)
                         indexOffset += questionMarker.length;
 
+                        // ✅ 질문과 근거 배열에 추가
+                        questionTexts.push(`(${index + 1}) ${q.question}`);
+                        evidenceTexts.push(originalText.slice(startIdx, endIdx + questionMarker.length));
+
                         return {
                             ...q,
                             clue_indices: {
@@ -61,7 +68,7 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
                         };
                     });
 
-                // ✅ 밑줄 칠 부분 병합
+                // ✅ 밑줄 범위 병합
                 updatedQuestions.forEach(q => {
                     let { start_index, end_index } = q.clue_indices;
                     if (currentStart === null) {
@@ -80,43 +87,39 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
                     mergedClues.push({ start: currentStart, end: currentEnd });
                 }
 
-                updatedQuestions.forEach((q, index) => {
-                    let row = worksheet.addRow({
-                        "지원자_ID": isFirstQuestion ? item.key_number : "",
-                        "자소서_ID": isFirstQuestion ? coverLetter.cover_letter_id : "",
-                        "질문번호": index + 1,
-                        "질문": `(${index + 1}) ${q.question}`,
-                        "근거": originalText.slice(q.clue_indices.start_index, q.clue_indices.end_index + 1),
-                        "밑줄_인덱스": JSON.stringify(mergedClues) // ✅ 밑줄 범위를 JSON 형식으로 저장
-                    });
+                // ✅ 한 행에 모든 질문과 근거를 넣음
+                let row = worksheet.addRow({
+                    "지원자_ID": item.key_number,
+                    "자소서_ID": coverLetter.cover_letter_id,
+                    "질문": questionTexts.join("\n"), // ✅ 개행으로 묶음
+                    "근거": evidenceTexts.join("\n"), // ✅ 개행으로 묶음
+                    "밑줄_인덱스": isFirstRow ? JSON.stringify(mergedClues) : "" // ✅ 첫 번째 행에만 저장
+                });
 
-                    // ✅ 원본 텍스트 일부만 밑줄 적용
-                    if (isFirstQuestion) {
-                        let richText = [];
-                        let lastIndex = 0;
+                // ✅ 원본 텍스트 일부만 밑줄 적용
+                if (isFirstRow) {
+                    let richText = [];
+                    let lastIndex = 0;
 
-                        mergedClues.forEach(({ start, end }) => {
-                            if (lastIndex < start) {
-                                richText.push({ text: originalText.slice(lastIndex, start) });
-                            }
-
-                            richText.push({
-                                text: originalText.slice(start, end + 1),
-                                font: { underline: true }
-                            });
-
-                            lastIndex = end + 1;
-                        });
-
-                        if (lastIndex < originalText.length) {
-                            richText.push({ text: originalText.slice(lastIndex) });
+                    mergedClues.forEach(({ start, end }) => {
+                        if (lastIndex < start) {
+                            richText.push({ text: originalText.slice(lastIndex, start) });
                         }
 
-                        row.getCell("원본").value = { richText };
+                        richText.push({
+                            text: originalText.slice(start, end + 1),
+                            font: { underline: true }
+                        });
+
+                        lastIndex = end + 1;
+                    });
+
+                    if (lastIndex < originalText.length) {
+                        richText.push({ text: originalText.slice(lastIndex) });
                     }
 
-                    isFirstQuestion = false;
-                });
+                    row.getCell("원본").value = { richText };
+                }
             });
         });
 
@@ -162,8 +165,6 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
             <div className="modal-content">
                 <h2>🛒 질문 카트</h2>
                 <p>현재 저장된 지원자 수: {new Set(cartItems.map(item => item.key_number)).size}</p>
-
-                {/* ✅ 카트 내용 표시 UI */}
                 <div style={{ maxHeight: "300px", overflowY: "auto", marginBottom: "10px", padding: "10px", border: "1px solid #ddd", borderRadius: "5px" }}>
                     {cartItems.map((item, idx) => (
                         <div key={idx} style={{ marginBottom: "15px" }}>
