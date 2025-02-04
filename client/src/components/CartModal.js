@@ -23,7 +23,8 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
             { header: "질문번호", key: "질문번호", width: 10 },
             { header: "질문", key: "질문", width: 50 },
             { header: "근거", key: "근거", width: 50 },
-            { header: "원본", key: "원본", width: 100 }
+            { header: "원본", key: "원본", width: 100 },
+            { header: "밑줄 인덱스", key: "밑줄_인덱스", width: 30 } // ✅ 밑줄 범위 저장
         ];
 
         cartItems.forEach(item => {
@@ -60,7 +61,7 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
                         };
                     });
 
-                // ✅ 근거 구역 병합
+                // ✅ 밑줄 칠 부분 병합
                 updatedQuestions.forEach(q => {
                     let { start_index, end_index } = q.clue_indices;
                     if (currentStart === null) {
@@ -85,7 +86,8 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
                         "자소서_ID": isFirstQuestion ? coverLetter.cover_letter_id : "",
                         "질문번호": index + 1,
                         "질문": `(${index + 1}) ${q.question}`,
-                        "근거": originalText.slice(q.clue_indices.start_index, q.clue_indices.end_index + 1)
+                        "근거": originalText.slice(q.clue_indices.start_index, q.clue_indices.end_index + 1),
+                        "밑줄_인덱스": JSON.stringify(mergedClues) // ✅ 밑줄 범위를 JSON 형식으로 저장
                     });
 
                     // ✅ 원본 텍스트 일부만 밑줄 적용
@@ -171,7 +173,7 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
                                     <h4>📄 자기소개서 {coverLetter.cover_letter_id}</h4>
                                     {coverLetter.questions.map((q, qIdx) => (
                                         <div key={qIdx} style={{ padding: "8px", backgroundColor: "#e6f7ff", borderRadius: "5px", marginBottom: "8px", position: "relative" }}>
-                                            <button onClick={() => handleRemoveQuestion(item.key_number, coverLetter.cover_letter_id, qIdx)}
+                                             <button onClick={() => handleRemoveQuestion(item.key_number, coverLetter.cover_letter_id, qIdx)}
                                                 style={{ position: "absolute", top: "5px", right: "5px", backgroundColor: "red", color: "white", border: "none", padding: "5px", borderRadius: "5px", cursor: "pointer" }}>
                                                 ❌
                                             </button>
