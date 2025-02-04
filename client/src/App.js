@@ -3,8 +3,9 @@ import FileUpload from "./components/FileUpload";
 import DataTable from "./components/DataTable";
 import KeySelection from "./components/KeySelection";
 import JsonModal from "./components/JsonModal";
+import CartModal from "./components/CartModal"; // ✅ 질문 카트 모달 추가
 import { sendPrompt } from "./services/apiService";
-import { parseGPTResponse } from "./utils/parseGPTResponse"; // ✅ 파싱 함수 추가
+import { parseGPTResponse } from "./utils/parseGPTResponse";
 
 function App() {
     const [headers, setHeaders] = useState([]);
@@ -20,6 +21,8 @@ function App() {
     const [progress, setProgress] = useState(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [jsonData, setJsonData] = useState([]);
+    const [cartItems, setCartItems] = useState([]); // ✅ 카트 저장소
+    const [isCartOpen, setIsCartOpen] = useState(false); // ✅ 카트 모달 상태
 
     const handleFileUpload = (headers, rows) => {
         setHeaders(headers);
@@ -102,6 +105,12 @@ function App() {
         setIsModalOpen(true);
     };
 
+    // ✅ 질문 카트에 추가
+    const handleAddToCart = (questionData) => {
+        setCartItems((prevCart) => [...prevCart, questionData]);
+        alert("추가되었습니다.");
+    };
+
     return (
         <div>
             <h1>엑셀 데이터 업로드 및 관리</h1>
@@ -154,7 +163,6 @@ function App() {
 
                     <JsonModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} jsonData={jsonData} />
 
-                    {/* ✅ 진행 바 (로딩 상태) */}
                     {isLoading && (
                         <div style={{ marginTop: "20px" }}>
                             <progress value={progress} max="100"></progress>
@@ -167,27 +175,24 @@ function App() {
                         {selectedRows.map((rowIndex) => (
                             <div key={rowIndex} style={{ marginBottom: "10px", padding: "10px", border: "1px solid #ddd" }}>
                                 <strong>지원자 {parseInt(rowIndex) + 1}:</strong> 
-                                {responses[rowIndex] ? (
-                                    <pre>{responses[rowIndex]}</pre>
-                                ) : (
-                                    <span>응답 대기 중...</span>
+                                {responses[rowIndex] && (
+                                    <button onClick={() => handleAddToCart(parsedResponses[rowIndex])}>🛒 추가</button>
                                 )}
 
-                                {/* ✅ 지원자별 응답 카드 추가 */}
                                 {parsedResponses[rowIndex] && (
-                                    <div style={{
-                                        border: "1px solid #ccc", padding: "10px", marginTop: "10px", borderRadius: "5px",
-                                        maxHeight: "200px", overflowY: "auto", backgroundColor: "#f9f9f9"
-                                    }}>
-                                        <h4>📌 질문 목록</h4>
-                                        {Object.entries(parsedResponses[rowIndex]).map(([key, value]) => (
-                                            <p key={key}><strong>{key}:</strong> {value}</p>
-                                        ))}
-                                    </div>
+                                    <pre>{JSON.stringify(parsedResponses[rowIndex], null, 2)}</pre>
                                 )}
                             </div>
                         ))}
                     </div>
+
+                    {/* ✅ 플로팅 카트 버튼 */}
+                    <button onClick={() => setIsCartOpen(true)} style={{ position: "fixed", bottom: "20px", right: "20px", background: "blue", color: "white" }}>
+                        🛒 질문 카트 ({cartItems.length})
+                    </button>
+
+                    {/* ✅ 카트 모달 */}
+                    <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cartItems={cartItems} />
                 </>
             )}
         </div>

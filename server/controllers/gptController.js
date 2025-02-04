@@ -24,6 +24,8 @@ const generateText = async (req, res) => {
             },
             { headers: openaiHeaders }
         );
+        
+        console.log(response.data.choices[0].message.content)
 
         res.status(200).json({ message: response.data.choices[0].message.content });
     } catch (error) {
