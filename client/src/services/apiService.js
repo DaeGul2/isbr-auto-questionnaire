@@ -76,13 +76,25 @@ ${userRequestString}
         // ✅ API 요청 (환경변수에서 불러온 엔드포인트 사용)
         const response = await axiosInstance.post("/gpt/generate-text", {
             prompt: finalPrompt,
-            max_tokens: 1500,  // ✅ 토큰 수 증가
+            max_tokens: 3000,  // ✅ 토큰 수 증가
             secretPassword
         });
 
         console.log("✅ GPT 응답:", response.data);
         return response.data;
     } catch (error) {
+        if (error.response) {
+            if (error.response.status === 403) {
+                alert("❌ 비밀번호가 틀렸습니다. 다시 확인하세요.");
+                return { error: "❌ 비밀번호 오류" };
+            } else if (error.response.status === 500) {
+                alert("❌ 서버에서 오류가 발생했습니다. 관리자에게 문의하세요.");
+                return { error: "❌ 서버 오류 발생" };
+            }
+        } else {
+            alert("❌ 요청 실패. 네트워크 상태를 확인하세요.");
+        }
+
         console.error("❌ API 요청 중 오류 발생:", error);
         throw error;
     }
