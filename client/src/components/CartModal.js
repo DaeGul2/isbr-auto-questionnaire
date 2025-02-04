@@ -156,11 +156,8 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
     };
 
     return (
-        <div style={{
-            position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex", justifyContent: "center", alignItems: "center"
-        }}>
-            <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "10px", width: "600px" }}>
+        <div className="modal-container">
+            <div className="modal-content">
                 <h2>🛒 질문 카트</h2>
                 <p>현재 저장된 지원자 수: {new Set(cartItems.map(item => item.key_number)).size}</p>
 
