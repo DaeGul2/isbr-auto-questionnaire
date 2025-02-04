@@ -43,6 +43,11 @@ function App() {
     };
 
     const handleSendPrompt = async () => {
+        if (!keyColumn) {
+            alert("❌ 키값을 선택해야 합니다!");
+            return;
+        }
+    
         if (!secretPassword.trim()) {
             alert("비밀번호를 입력하세요!");
             return;

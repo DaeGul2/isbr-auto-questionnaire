@@ -20,7 +20,7 @@ const generateText = async (req, res) => {
             {
                 model: "gpt-4o",
                 messages: [{ role: "user", content: prompt }],
-                max_tokens: 2000
+                max_tokens: 3000
             },
             { headers: openaiHeaders }
         );
