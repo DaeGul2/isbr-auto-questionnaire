@@ -75,15 +75,15 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
             <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "10px", width: "600px" }}>
                 <h2>🛒 질문 카트</h2>
                 <p>현재 저장된 지원자 수: {new Set(cartItems.map(item => item.key_number)).size}</p>
-
+        
                 <div style={{ maxHeight: "400px", overflowY: "auto" }}>
-                    {cartItems.map((item, index) => (
+                    {cartItems.length > 0 ? cartItems.map((item, index) => (
                         <div key={index} style={{ border: "1px solid #ddd", padding: "10px", marginBottom: "10px", borderRadius: "8px" }}>
                             <h3>🆔 지원자 ID: {item.key_number}</h3>
-                            {item.cover_letters.map((coverLetter, cIndex) => (
+                            {item.cover_letters?.length > 0 ? item.cover_letters.map((coverLetter, cIndex) => (
                                 <div key={cIndex} style={{ padding: "10px", backgroundColor: "#f9f9f9", borderRadius: "6px", marginBottom: "10px" }}>
                                     <h4>📄 자기소개서 {coverLetter.cover_letter_id}</h4>
-                                    {coverLetter.questions.map((q, qIndex) => (
+                                    {coverLetter.questions?.length > 0 ? coverLetter.questions.map((q, qIndex) => (
                                         <div key={qIndex} style={{ marginBottom: "10px", padding: "8px", backgroundColor: "#e6f7ff", borderRadius: "5px", position: "relative" }}>
                                             <p><strong>✅ 질문:</strong> {q.question}</p>
                                             <p><strong>🔍 근거:</strong> {coverLetter.originalText.slice(Math.max(0, q.clue_indices.start_index), q.clue_indices.end_index + 1)}</p>
@@ -94,17 +94,18 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
                                                 ❌ 삭제
                                             </button>
                                         </div>
-                                    ))}
+                                    )) : <p>No questions available.</p>}
                                 </div>
-                            ))}
+                            )) : <p>No cover letters available.</p>}
                         </div>
-                    ))}
+                    )) : <p>No items in the cart.</p>}
                 </div>
-
+        
                 <button onClick={handleDownloadExcel} style={{ marginTop: "10px", backgroundColor: "green", color: "white", padding: "10px", borderRadius: "5px", width: "100%" }}>📥 Excel 다운로드</button>
                 <button onClick={onClose} style={{ marginTop: "10px", backgroundColor: "gray", color: "white", padding: "10px", borderRadius: "5px", width: "100%" }}>닫기</button>
             </div>
         </div>
+        
     );
 };
 
