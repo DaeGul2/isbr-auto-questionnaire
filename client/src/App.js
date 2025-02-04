@@ -6,6 +6,9 @@ import JsonModal from "./components/JsonModal";
 import CartModal from "./components/CartModal";
 import { sendPrompt } from "./services/apiService";
 import { parseGPTResponse } from "./utils/parseGPTResponse";
+import "./styles/theme.css";
+
+
 
 function App() {
     const [headers, setHeaders] = useState([]);

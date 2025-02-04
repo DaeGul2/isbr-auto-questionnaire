@@ -1,0 +1,42 @@
+:root {
+    --primary-blue: #0056b3; /* 메인 블루 컬러 */
+    --light-blue: #f0f8ff; /* 밝은 블루 배경 */
+    --gray-text: #6c757d; /* 기본 텍스트 색상 */
+    --card-bg: #ffffff; /* 카드 배경 */
+    --border-color: #dee2e6; /* 테두리 색상 */
+  }
+  
+  body {
+    background-color: var(--light-blue);
+    color: var(--gray-text);
+    font-family: "Inter", sans-serif;
+  }
+  
+  .container {
+    padding: 20px;
+  }
+  
+  .card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
+  }
+  
+  .card h3 {
+    color: var(--primary-blue);
+  }
+  
+  button {
+    border-radius: 6px;
+  }
+  
+  .btn-primary {
+    background-color: var(--primary-blue);
+    border-color: var(--primary-blue);
+  }
+  
+  .btn-primary:hover {
+    background-color: darkblue;
+  }
+  
