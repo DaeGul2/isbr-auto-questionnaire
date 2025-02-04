@@ -1,63 +1,85 @@
-import win32com.client
-import time
+import json
+import pandas as pd
 from pptx import Presentation
-from pptx.util import Inches
+from pptx.util import Inches, Pt
+from pptx.enum.text import PP_ALIGN
 
-# ✅ 엑셀 & PPT 초기화
-excel = win32com.client.DispatchEx("Excel.Application")  # ✅ DispatchEx 사용
-ppt = win32com.client.Dispatch("PowerPoint.Application")
+# ✅ 엑셀 파일 경로
+excel_path = "./data.xlsx"  # 데이터 파일 경로
+output_pptx_path = "./test.pptx"  # 출력할 PPT 파일 경로
 
-# ✅ 엑셀 파일 열기
-excel_path = "./data.xlsx"
-wb = excel.Workbooks.Open(excel_path)
-ws = wb.Sheets(1)  # 첫 번째 시트 선택
+# ✅ 엑셀 데이터 읽기 (NaN 값은 빈 문자열로 변환)
+df = pd.read_excel(excel_path).fillna("")
 
-# ✅ PowerPoint 새 프레젠테이션 열기
-prs = ppt.Presentations.Add()
-ppt.Visible = True  # PPT 창 표시
+# ✅ PowerPoint 생성
+prs = Presentation()
 
-time.sleep(1)  # ✅ PPT가 완전히 로드될 때까지 대기
+# ✅ 지원자_ID - 자소서_ID 기준으로 중복 제거하여 원본과 밑줄 인덱스를 한 번만 저장
+unique_docs = {}
 
-# ✅ 데이터 구조
-row = 2  # 엑셀 데이터 시작 행 (1은 헤더)
-while True:
-    지원자_ID = ws.Cells(row, 1).Value  # A열 (지원자 ID)
-    자소서_ID = ws.Cells(row, 2).Value  # B열 (자소서 ID)
-    질문 = ws.Cells(row, 3).Value  # C열 (질문)
-    원본 = ws.Cells(row, 6).Value  # F열 (원본)
+for _, row in df.iterrows():
+    key = (row["지원자_ID"], row["자소서_ID"])  # 지원자 ID + 자소서 ID 조합
 
-    if not 지원자_ID:  # 데이터 없으면 종료
-        break
+    if key not in unique_docs:
+        unique_docs[key] = {
+            "원본": str(row["원본"]),  # ✅ float로 변환되는 것 방지
+            "밑줄 인덱스": json.loads(row["밑줄 인덱스"]) if isinstance(row["밑줄 인덱스"], str) else [],
+            "질문 리스트": []
+        }
 
-    # ✅ 새 슬라이드 추가
-    slide = prs.Slides.Add(1, 5)  # 5 = 빈 슬라이드 레이아웃
-    
-    # ✅ 지원자 ID 추가 (좌측 상단)
-    textbox = slide.Shapes.AddTextbox(1, Inches(0.5), Inches(0.2), Inches(2), Inches(0.5))
-    textbox.TextFrame.TextRange.Text = f"지원자 ID: {지원자_ID}"
+    # ✅ 같은 문서에 해당하는 질문 추가
+    unique_docs[key]["질문 리스트"].append(row["질문"])
 
-    # ✅ 엑셀에서 "원본" 셀 복사 (서식 유지됨)
-    ws.Cells(row, 6).Copy()  # F열 (원본)
-    time.sleep(1)  # ✅ 딜레이 추가 (복사 대기)
+# ✅ PowerPoint 슬라이드 생성
+for (지원자_ID, 자소서_ID), content in unique_docs.items():
+    slide = prs.slides.add_slide(prs.slide_layouts[5])  # 빈 슬라이드 레이아웃
 
-    # ✅ PowerPoint에서 붙여넣기 (ActiveWindow → ActivePresentation 사용)
-    prs.Slides(1).Shapes.Paste()
-    time.sleep(1)  # ✅ 딜레이 추가
+    # ✅ 지원자 ID 텍스트 추가
+    title_shape = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(3), Inches(0.5))
+    title_text_frame = title_shape.text_frame
+    title_text_frame.text = f"지원자 ID: {지원자_ID}"
+    title_text_frame.paragraphs[0].font.bold = True
+    title_text_frame.paragraphs[0].font.size = Pt(20)
 
-    # ✅ 질문 목록 추가 (아래쪽)
-    textbox = slide.Shapes.AddTextbox(1, Inches(0.5), Inches(3.5), Inches(8), Inches(2.5))
-    textbox.TextFrame.TextRange.Text = f"질문: {질문}"
+    # ✅ 원본 텍스트 추가 (밑줄 적용)
+    content_shape = slide.shapes.add_textbox(Inches(0.5), Inches(1), Inches(9), Inches(2))
+    content_text_frame = content_shape.text_frame
+    content_text_frame.word_wrap = True
+    p = content_text_frame.add_paragraph()
 
-    row += 1  # 다음 행으로 이동
+    original_text = content["원본"]
+    underline_ranges = content["밑줄 인덱스"]
 
-# ✅ PPT 저장
-output_pptx_path = "./test.pptx"
-prs.SaveAs(output_pptx_path)
-print(f"✅ PowerPoint 저장 완료: {output_pptx_path}")
+    last_index = 0
+    for underline_range in underline_ranges:
+        start = underline_range["start"]
+        end = underline_range["end"]
 
-# ✅ 엑셀 닫기
-wb.Close(SaveChanges=False)
-excel.Quit()
+        # ✅ 밑줄이 없는 부분 추가
+        if last_index < start:
+            run = p.add_run()
+            run.text = str(original_text[last_index:start])  # ✅ float 변환 방지
 
-# ✅ PowerPoint 닫기
-ppt.Quit()
+        # ✅ 밑줄이 있는 부분 추가
+        run = p.add_run()
+        run.text = str(original_text[start:end])  # ✅ float 변환 방지
+        run.font.underline = True  # ✅ 밑줄 적용
+
+        last_index = end
+
+    # ✅ 마지막 남은 텍스트 추가
+    if last_index < len(original_text):
+        run = p.add_run()
+        run.text = str(original_text[last_index:])  # ✅ float 변환 방지
+
+    # ✅ 질문 리스트 추가
+    questions_text = "\n".join([f"- {q}" for q in content["질문 리스트"]])
+    question_shape = slide.shapes.add_textbox(Inches(0.5), Inches(3.5), Inches(9), Inches(3))
+    question_text_frame = question_shape.text_frame
+    question_text_frame.word_wrap = True
+    question_text_frame.text = "질문 리스트:\n" + questions_text
+
+# ✅ PowerPoint 저장
+prs.save(output_pptx_path)
+
+print(f"✅ PowerPoint 파일이 성공적으로 저장되었습니다: {output_pptx_path}")
