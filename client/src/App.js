@@ -54,38 +54,40 @@ function App() {
         }
 
         setIsLoading(true);
-        setProgress(0);
-        const totalRequests = selectedRows.length;
-        const newResponses = {};
-        const newParsedResponses = {};
+    setProgress(0);
+    const totalRequests = selectedRows.length;
+    const newResponses = {};
+    const newParsedResponses = {};
 
-        for (let i = 0; i < totalRequests; i++) {
-            const rowIndex = selectedRows[i];
-            const selectedRow = { key_number: data[rowIndex][keyColumn] };
-            selectedColumns.forEach((col) => {
-                selectedRow[col] = data[rowIndex][col];
-            });
+    for (let i = 0; i < totalRequests; i++) {
+        const rowIndex = selectedRows[i];
+        const selectedRow = { key_number: data[rowIndex][keyColumn] };
+        selectedColumns.forEach((col) => {
+            selectedRow[col] = data[rowIndex][col];
+        });
 
-            try {
-                const result = await sendPrompt(selectedRow, userRequest, secretPassword);
-                newResponses[rowIndex] = result.message;
+        const coverLetterText = selectedColumns.map(col => data[rowIndex][col]);
 
-                // ✅ 원본 자기소개서를 포함하여 파싱
-                const coverLetterText = selectedColumns.map(col => data[rowIndex][col]);
-                newParsedResponses[rowIndex] = parseGPTResponse(result.message, coverLetterText);
-            } catch (error) {
-                newResponses[rowIndex] = "API 요청 오류 발생";
-                newParsedResponses[rowIndex] = {};
-            }
+        try {
+            const result = await sendPrompt(selectedRow, userRequest, secretPassword);
+            newResponses[rowIndex] = result.message;
 
-            setResponses({ ...newResponses });
-            setParsedResponses({ ...newParsedResponses });
-
-            // ✅ 진행률 업데이트
-            setProgress(((i + 1) / totalRequests) * 100);
+            const parsedResult = parseGPTResponse(result.message, coverLetterText);
+            newParsedResponses[rowIndex] = {
+                ...parsedResult,
+                originalText: coverLetterText  // 각 자기소개서의 원본 텍스트 저장
+            };
+        } catch (error) {
+            newResponses[rowIndex] = "API 요청 오류 발생";
+            newParsedResponses[rowIndex] = {};
         }
 
-        setIsLoading(false);
+        setResponses({ ...newResponses });
+        setParsedResponses({ ...newParsedResponses });
+        setProgress(((i + 1) / totalRequests) * 100);
+    }
+
+    setIsLoading(false);
     };
 
     const handleShowJson = () => {
@@ -196,6 +198,7 @@ function App() {
                                         <div key={cIndex} style={{ marginBottom: "10px", padding: "10px", border: "1px solid #ccc", borderRadius: "8px", backgroundColor: "#ffffff" }}>
 
                                             <h4>📄 자기소개서 {coverLetter.cover_letter_id}</h4>
+                                            <p><strong>원본 자기소개서:</strong> {parsedResponses[rowIndex].originalText[cIndex]}</p>
                                             {coverLetter.questions.map((q, qIndex) => (
                                                 <div key={qIndex} style={{ marginBottom: "10px", padding: "8px", backgroundColor: "#e6f7ff", borderRadius: "5px" }}>
                                                     <p><strong>✅ 질문:</strong> {q.question}</p>

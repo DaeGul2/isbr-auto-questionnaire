@@ -23,7 +23,8 @@ export const parseGPTResponse = (response, coverLetterText) => {
         for (let i = 1; i <= coverLetterNum; i++) {
             let coverLetter = {
                 cover_letter_id: i,
-                questions: []
+                questions: [],
+                originalText: coverLetterText[i - 1]  // ✅ 원본 자기소개서 텍스트 저장
             };
 
             for (let j = 1; j <= questionNum; j++) {
