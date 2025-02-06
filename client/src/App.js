@@ -26,6 +26,19 @@ function App() {
     const [jsonData, setJsonData] = useState([]);
     const [cartItems, setCartItems] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
+    
+
+    const [isExpanded, setIsExpanded] = useState({});
+    const [isDetailVisible, setIsDetailVisible] = useState({}); // ✅ (지원자 ID + 자소서 ID) 기준으로 관리
+
+    const toggleExpand = (id) => {
+        setIsExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    const toggleDetail = (applicantId, coverLetterId) => {
+        const key = `${applicantId}-${coverLetterId}`; // ✅ 지원자 ID + 자소서 ID를 키로 사용
+        setIsDetailVisible((prev) => ({ ...prev, [key]: !prev[key] }));
+    };
 
     const handleFileUpload = (headers, rows) => {
         setHeaders(headers);
@@ -50,7 +63,7 @@ function App() {
             alert("❌ 키값을 선택해야 합니다!");
             return;
         }
-    
+
         if (!secretPassword.trim()) {
             alert("비밀번호를 입력하세요!");
             return;
@@ -124,7 +137,7 @@ function App() {
             alert("이미 추가된 지원자의 질문입니다.");
             return;
         }
-        console.log("parsed : ",parsedResponse);
+        console.log("parsed : ", parsedResponse);
 
         setCartItems([...cartItems, parsedResponse]);
         alert("질문이 카트에 추가되었습니다.");
@@ -195,29 +208,148 @@ function App() {
                     {/* ✅ 응답 카드 UI 개선 */}
                     <h3>응답:</h3>
                     <div>
-                        {selectedRows.map((rowIndex) => (
-                            <div key={rowIndex} style={{ marginBottom: "20px", padding: "15px", border: "1px solid #ddd", borderRadius: "8px", backgroundColor: "#f9f9f9" }}>
-                                <h3>🆔 지원자 ID: {parsedResponses[rowIndex]?.key_number || "N/A"}</h3>
-                                <button onClick={() => handleAddToCart(parsedResponses[rowIndex])} style={{ marginTop: "10px", backgroundColor: "#0073e6", color: "white" }}>
-                                    🛒 카트에 추가
-                                </button>
-                                {parsedResponses[rowIndex]?.cover_letters.map((coverLetter, cIndex) => (
-                                    <div key={cIndex} style={{ marginBottom: "10px", padding: "10px", border: "1px solid #ccc", borderRadius: "8px", backgroundColor: "#ffffff" }}>
-                                        <h4>📄 자기소개서 {coverLetter.cover_letter_id}</h4>
-                                        
-                                        <p><strong>원본 자기소개서:</strong> {parsedResponses[rowIndex].originalText[cIndex]}</p>
-                                        {coverLetter.questions.map((q, qIndex) => (
-                                            <div key={qIndex} style={{ marginBottom: "10px", padding: "8px", backgroundColor: "#e6f7ff", borderRadius: "5px" }}>
-                                                <p><strong>✅ 질문:</strong> {q.question}</p>
-                                                <p><strong>🔍 근거:</strong> {parsedResponses[rowIndex].originalText[cIndex].slice(Math.max(0, q.clue_indices.start_index), q.clue_indices.end_index + 1)}</p>
+                        {selectedRows.map((rowIndex) => {
+                            const applicantId = parsedResponses[rowIndex]?.key_number || "N/A"; // ✅ 지원자 ID
 
-                                            </div>
-                                        ))}
+                            return (
+                                <div
+                                    key={rowIndex}
+                                    style={{
+                                        marginBottom: "20px",
+                                        padding: "15px",
+                                        border: "1px solid #ddd",
+                                        borderRadius: "8px",
+                                        backgroundColor: "#f9f9f9",
+                                    }}
+                                >
+                                    {/* ✅ 지원자 ID 및 열기/닫기 버튼 */}
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center", // ✅ 버튼과 텍스트를 같은 높이로 정렬
+                                            gap: "10px", // ✅ 간격 추가
+                                        }}
+                                    >
+                                        <p>🆔 지원자 ID: {applicantId}</p>
+                                        <button
+                                            onClick={() => toggleExpand(rowIndex)}
+                                            style={{
+                                                backgroundColor: "#0073e6",
+                                                color: "white",
+                                                padding: "6px 10px",
+                                                border: "none",
+                                                borderRadius: "5px",
+                                                cursor: "pointer",
+                                            }}
+                                        >
+                                            {isExpanded[rowIndex] ? "닫기 ▲" : "열기 ▼"}
+                                        </button>
                                     </div>
-                                ))}
-                            </div>
-                        ))}
+
+
+                                    {isExpanded[rowIndex] &&
+                                        parsedResponses[rowIndex]?.cover_letters.map((coverLetter, cIndex) => {
+                                            const coverLetterId = coverLetter.cover_letter_id; // ✅ 자소서 ID
+                                            const detailKey = `${applicantId}-${coverLetterId}`; // ✅ 고유한 키 생성
+                                            const coverText = parsedResponses[rowIndex].originalText[cIndex];
+                                            const isExpandedDetail = isDetailVisible[detailKey];
+
+                                            return (
+                                                <div
+                                                    key={cIndex}
+                                                    style={{
+                                                        marginBottom: "10px",
+                                                        padding: "10px",
+                                                        border: "1px solid #ccc",
+                                                        borderRadius: "8px",
+                                                        backgroundColor: "#ffffff",
+                                                        display: "flex", // ✅ 좌우 배치 적용
+                                                        gap: "20px", // ✅ 좌우 간격 추가
+                                                        alignItems: "flex-start", // ✅ 상단 정렬
+                                                    }}
+                                                >
+                                                    {/* ✅ 왼쪽: 원본 자기소개서 (200자 제한) */}
+                                                    <div style={{ width: "50%", padding: "10px", minHeight: "100px" }}>
+                                                        <h4>📄 자기소개서 {coverLetterId}</h4>
+                                                        <p>
+                                                            <strong>원본 자기소개서:</strong>{" "}
+                                                            {isExpandedDetail ? coverText : coverText.slice(0, 200)}
+                                                            {!isExpandedDetail && coverText.length > 200 && (
+                                                                <>
+                                                                    ...{" "}
+                                                                    <button
+                                                                        onClick={() => toggleDetail(applicantId, coverLetterId)}
+                                                                        style={{
+                                                                            backgroundColor: "transparent",
+                                                                            color: "#0073e6",
+                                                                            border: "none",
+                                                                            cursor: "pointer",
+                                                                            fontSize: "14px",
+                                                                        }}
+                                                                    >
+                                                                        [상세보기]
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                            {isExpandedDetail && (
+                                                                <>
+                                                                    {" "}
+                                                                    <button
+                                                                        onClick={() => toggleDetail(applicantId, coverLetterId)}
+                                                                        style={{
+                                                                            backgroundColor: "transparent",
+                                                                            color: "#0073e6",
+                                                                            border: "none",
+                                                                            cursor: "pointer",
+                                                                            fontSize: "14px",
+                                                                        }}
+                                                                    >
+                                                                        [축소보기]
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                        </p>
+                                                    </div>
+
+                                                    {/* ✅ 오른쪽: 질문 & 근거 리스트 (스크롤 적용) */}
+                                                    <div
+                                                        style={{
+                                                            width: "50%",
+                                                            padding: "10px",
+                                                            borderLeft: "2px solid #ddd", // ✅ 구분선 추가
+                                                            maxHeight: isExpandedDetail ? "auto" : "100px", // ✅ 상세보기 시 전체 높이 적용
+                                                            overflowY: "auto", // ✅ 초과 시 스크롤 적용
+                                                        }}
+                                                    >
+                                                        {coverLetter.questions.map((q, qIndex) => (
+                                                            <div
+                                                                key={qIndex}
+                                                                style={{
+                                                                    marginBottom: "10px",
+                                                                    padding: "8px",
+                                                                    backgroundColor: "#e6f7ff",
+                                                                    borderRadius: "5px",
+                                                                }}
+                                                            >
+                                                                <p>
+                                                                    <strong>✅ 질문{qIndex + 1}:</strong> {q.question}
+                                                                </p>
+                                                                <p>
+                                                                    <strong>🔍 근거:</strong>{" "}
+                                                                    {coverText.slice(Math.max(0, q.clue_indices.start_index), q.clue_indices.end_index + 1)}
+                                                                </p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+
+                                </div>
+                            );
+                        })}
                     </div>
+
                     {/* ✅ 카트 플로팅 버튼 추가 */}
                     <button
                         onClick={() => setIsCartOpen(true)}
