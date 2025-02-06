@@ -26,7 +26,7 @@ function App() {
     const [jsonData, setJsonData] = useState([]);
     const [cartItems, setCartItems] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
-    
+
 
     const [isExpanded, setIsExpanded] = useState({});
     const [isDetailVisible, setIsDetailVisible] = useState({}); // ✅ (지원자 ID + 자소서 ID) 기준으로 관리
@@ -244,6 +244,9 @@ function App() {
                                         >
                                             {isExpanded[rowIndex] ? "닫기 ▲" : "열기 ▼"}
                                         </button>
+                                        <button onClick={() => handleAddToCart(parsedResponses[rowIndex])} style={{ marginTop: "10px", backgroundColor: "#0073e6", color: "white" }}>
+                                    🛒 카트에 추가
+                                </button>
                                     </div>
 
 
@@ -317,7 +320,7 @@ function App() {
                                                             width: "50%",
                                                             padding: "10px",
                                                             borderLeft: "2px solid #ddd", // ✅ 구분선 추가
-                                                            maxHeight: isExpandedDetail ? "auto" : "100px", // ✅ 상세보기 시 전체 높이 적용
+
                                                             overflowY: "auto", // ✅ 초과 시 스크롤 적용
                                                         }}
                                                     >
