@@ -96,8 +96,8 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
         # ✅ 원본 텍스트 추가 (밑줄 + 볼드 처리 + 줄간격 1.5 적용)
         last_index = 0
         paragraph = text_frame.add_paragraph()
-        paragraph.line_spacing = 1.5
-        paragraph.space_after = Pt(10)  # ✅ 줄간격 1.5 적용
+        paragraph.line_spacing = 1.5 # ✅ 줄간격 1.5 적용
+        paragraph.space_after = Pt(10)  
         paragraph.space_before = Pt(10)
 
         for underline in underline_ranges:

@@ -30,8 +30,18 @@ function App() {
 
     const [isExpanded, setIsExpanded] = useState({});
     const [isDetailVisible, setIsDetailVisible] = useState({}); // ✅ (지원자 ID + 자소서 ID) 기준으로 관리
+    const [isAllSelected, setIsAllSelected] = useState(false); // ✅ 전체 선택 여부 추가
 
 
+
+    const handleToggleSelectAll = () => {
+        if (isAllSelected) {
+            setSelectedRows([]); // 전체 해제
+        } else {
+            setSelectedRows(data.map((_, index) => index)); // 모든 행 선택
+        }
+        setIsAllSelected(!isAllSelected); // 선택 여부 토글
+    };
     const handleAddAllToCart = () => {
         if (selectedRows.length === 0) {
             alert("선택된 항목이 없습니다.");
@@ -177,6 +187,23 @@ function App() {
                         setKeyColumn={setKeyColumn}
                         generateKeyColumn={generateKeyColumn}
                     />
+                       {/* ✅ 전체 선택 버튼 추가 */}
+                       <button
+                        onClick={handleToggleSelectAll}
+                        style={{
+                            marginTop: "10px",
+                            padding: "8px 12px",
+                            backgroundColor: isAllSelected ? "#ff5722" : "#0073e6",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "5px",
+                            cursor: "pointer",
+                            fontSize: "14px",
+                            fontWeight: "bold",
+                        }}
+                    >
+                        {isAllSelected ? "전체 해제" : "전체 선택"}
+                    </button>
                     <DataTable
                         columns={headers.map(header => ({ Header: header, accessor: header }))}
                         data={data}
@@ -188,6 +215,7 @@ function App() {
                         setSelectedRows={setSelectedRows}
                         setHeaders={setHeaders}
                     />
+                     
 
                     {/* ✅ 프롬프트 입력 복원 */}
                     <div style={{ marginTop: "20px" }}>
@@ -451,7 +479,7 @@ function App() {
                     >
                         🛍️ 카트 전체 담기
                     </button>
-
+                   
 
                     <CartModal
                         isOpen={isCartOpen}
