@@ -31,6 +31,27 @@ function App() {
     const [isExpanded, setIsExpanded] = useState({});
     const [isDetailVisible, setIsDetailVisible] = useState({}); // ✅ (지원자 ID + 자소서 ID) 기준으로 관리
 
+
+    const handleAddAllToCart = () => {
+        if (selectedRows.length === 0) {
+            alert("선택된 항목이 없습니다.");
+            return;
+        }
+
+        const newItems = selectedRows
+            .map((rowIndex) => parsedResponses[rowIndex])
+            .filter((parsedResponse) => parsedResponse && !isItemInCart(parsedResponse.key_number)); // 중복 방지
+
+        if (newItems.length === 0) {
+            alert("모든 항목이 이미 카트에 추가되었습니다.");
+            return;
+        }
+
+        setCartItems([...cartItems, ...newItems]);
+        alert(`${newItems.length}개 항목이 카트에 추가되었습니다.`);
+    };
+
+
     const toggleExpand = (id) => {
         setIsExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
     };
@@ -412,6 +433,25 @@ function App() {
                     >
                         🛒 카트 보기
                     </button>
+                    <button
+                        onClick={handleAddAllToCart}
+                        style={{
+                            position: "fixed",
+                            bottom: "70px", // '카트 보기' 버튼 위에 위치
+                            right: "20px",
+                            padding: "10px 15px",
+                            backgroundColor: "#0073e6",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "8px",
+                            cursor: "pointer",
+                            fontSize: "16px",
+                            fontWeight: "bold",
+                        }}
+                    >
+                        🛍️ 카트 전체 담기
+                    </button>
+
 
                     <CartModal
                         isOpen={isCartOpen}
