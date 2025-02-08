@@ -3,11 +3,29 @@ import { useState } from "react";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 import { uploadExcelAndGeneratePPT, downloadPPT } from "../services/flaskService"; // ✅ Flask API
+import {useDropzone} from 'react-dropzone';
 
 const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
 
     const [file, setFile] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [fileInfo, setFileInfo] = useState(null);
+
+     // 드래그 앤 드롭 처리 핸들러
+     const onDrop = (acceptedFiles) => {
+        setFile(acceptedFiles[0]);
+        setFileInfo({
+            name: acceptedFiles[0].name,
+            size: acceptedFiles[0].size,
+            type: acceptedFiles[0].type,
+            path: acceptedFiles[0].path || acceptedFiles[0].name // path 속성이 없는 경우 name을 사용
+        });
+    };
+
+
+    const {getRootProps, getInputProps, isDragActive} = useDropzone({
+        onDrop
+      });
 
     // ✅ 파일 업로드 핸들러
     const handleFileChange = (e) => {
@@ -227,6 +245,20 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
         <div className="modal-container">
             <div className="modal-content">
                 <h2>🛒 질문 카트</h2>
+                <div {...getRootProps()} style={{ border: '2px dashed gray', padding: '20px', textAlign: 'center' }}>
+                    <input {...getInputProps()} />
+                    {
+                        isDragActive ?
+                        <p>파일을 여기에 놓으세요...</p> :
+                        <p>파일을 드래그하거나 클릭하여 선택하세요.</p>
+                    }
+                     {fileInfo && (
+                    <div style={{ marginTop: '10px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}>
+                        <p><strong>업로드된 파일:📄</strong> {fileInfo.name}</p>
+                        <p><strong>파일 크기:</strong> {(fileInfo.size / 1024).toFixed(2)} KB</p>
+                    </div>
+                )}
+                </div>
                 <p>현재 저장된 지원자 수: {new Set(cartItems.map(item => item.key_number)).size}</p>
                 <div style={{ maxHeight: "300px", overflowY: "auto", marginBottom: "10px", padding: "10px", border: "1px solid #ddd", borderRadius: "5px" }}>
                     {cartItems.map((item, idx) => (
@@ -252,7 +284,7 @@ const CartModal = ({ isOpen, onClose, cartItems, setCartItems }) => {
                 </div>
                 <div>
                     <h3>📂 엑셀 파일 업로드</h3>
-                    <input type="file" accept=".xlsx" onChange={handleFileChange} />
+                   
                 </div>
                 <button onClick={handleDownloadExcel}>📥 Excel 다운로드</button>
                 <button
