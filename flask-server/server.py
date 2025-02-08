@@ -5,7 +5,7 @@ from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS  # ✅ CORS 라이브러리 추가
 from werkzeug.utils import secure_filename
 from pptx import Presentation
-from pptx.util import Inches, Pt
+from pptx.util import Inches, Pt, Cm
 from pptx.enum.text import PP_ALIGN
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE
@@ -28,26 +28,61 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
     df = pd.read_excel(excel_path)
     print(df)
     prs = Presentation()
+    # A4 크기 세로 설정 (210mm x 297mm)
+    prs.slide_width = Cm(21.0)
+    prs.slide_height = Cm(29.7)
     print("컬럼 확인 : ", df.columns)
+
+    whole_width = 7.5  # 전체 너비를 이 변수로 제어
+    
+
     for _, row in df.iterrows():
         slide = prs.slides.add_slide(prs.slide_layouts[5])  # 백지 슬라이드
 
         # ✅ 지원자 ID 삽입 (좌측 상단)
-        text_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(3), Inches(0.5))
+        # 텍스트 박스 설정
+        text_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.5), Inches(3), Inches(0.5))
         text_frame = text_box.text_frame
         text_frame.clear()
+
+        # 단락 생성
         p = text_frame.add_paragraph()
-        p.text = f"수험번호: {row['지원자_ID']}"
-        p.font.size = Pt(12)
-        p.font.bold = True
-        p.font.name = "맑은 고딕"
         p.alignment = PP_ALIGN.LEFT
 
-        # ✅ '자기소개서' 소제목
-        title_y = 1.0  
-        text_box = slide.shapes.add_textbox(Inches(0.5), Inches(title_y), Inches(6), Inches(0.5))
+        # '수험번호:' 부분 추가 (볼드 처리)
+        run = p.add_run()
+        run.text = "수험번호 : "
+        run.font.bold = True
+        run.font.size = Pt(10)
+        run.font.name = "맑은 고딕"
+
+        # 수험번호 값 추가 (볼드 미처리)
+        run = p.add_run()
+        run.text = f"{row['지원자_ID']}\n"
+        run.font.bold = False
+        run.font.size = Pt(10)
+        run.font.name = "맑은 고딕"
+
+        # '지원분야:' 부분 추가 (볼드 처리)
+        run = p.add_run()
+        run.text = "지원분야 : "
+        run.font.bold = True
+        run.font.size = Pt(10)
+        run.font.name = "맑은 고딕"
+
+        # 지원분야 값 추가 (볼드 미처리)
+        run = p.add_run()
+        run.text = f"{dict(row).get('지원분야', '기본값')}"
+        run.font.bold = False
+        run.font.size = Pt(10)
+        run.font.name = "맑은 고딕"
+
+         # 자기소개서 제목
+        title_y = 1.0
+        text_box = slide.shapes.add_textbox(Inches(0.5), Inches(title_y+0.2), Inches(whole_width), Inches(0.5))
         text_frame = text_box.text_frame
         text_frame.clear()
+
         p = text_frame.add_paragraph()
         p.text = "자기소개서"
         p.font.size = Pt(14)
@@ -55,58 +90,55 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
         p.font.color.rgb = RGBColor(0, 0, 0)
         p.font.name = "맑은 고딕"
         p.alignment = PP_ALIGN.LEFT
+    
+        # 자소서_ID에 맞는 설명
+        description_y = title_y + 0.5
+        description_text = id_to_text.get(str(row["자소서_ID"]), "기본값")
 
-        # ✅ 자소서_ID에 맞는 설명 추가
-        description_y = title_y + 0.5  
-        description_text = id_to_text.get(str(row["자소서_ID"]), "기본값")  
-
-        text_box = slide.shapes.add_textbox(Inches(0.5), Inches(description_y), Inches(6), Inches(0.5))
+        text_box = slide.shapes.add_textbox(Inches(0.5), Inches(description_y+0.2), Inches(whole_width), Inches(0.5))
         text_frame = text_box.text_frame
         text_frame.clear()
+        text_frame.word_wrap = True
+
         p = text_frame.add_paragraph()
-        p.text = description_text
-        p.font.size = Pt(11)
-        p.font.bold = True
+        p.text = "질문 : " + description_text
+        p.font.size = Pt(10)
+        p.font.bold = False
         p.font.color.rgb = RGBColor(0, 0, 0)
         p.font.name = "맑은 고딕"
         p.alignment = PP_ALIGN.LEFT
 
-        # ✅ Horizon (수평선)
+        # Horizon (수평선)
         line_y = title_y + 0.65
         line_shape = slide.shapes.add_shape(
-            MSO_SHAPE.RECTANGLE, Inches(0.5), Inches(line_y), Inches(9), Inches(0.02)
+            MSO_SHAPE.RECTANGLE, Inches(0.5), Inches(line_y+0.2), Inches(whole_width), Inches(0.02)
         )
         line_shape.fill.solid()
         line_shape.fill.fore_color.rgb = RGBColor(200, 200, 200)
         line_shape.line.fill.background()
 
-        # ✅ 원본 텍스트 가져오기
+        # 원본 텍스트 및 밑줄 인덱스 처리
         original_text = str(row["원본"]).strip() if pd.notna(row["원본"]) else ""
-
-        # ✅ 밑줄 인덱스 처리
         underline_ranges = json.loads(row["밑줄 인덱스"]) if pd.notna(row["밑줄 인덱스"]) else []
 
-        # ✅ 원본 텍스트 박스
-        text_box = slide.shapes.add_textbox(Inches(0.5), Inches(line_y - 0.1), Inches(9), Inches(2))
+        text_box = slide.shapes.add_textbox(Inches(0.5), Inches(line_y - 0.1+0.2), Inches(whole_width), Inches(2))
         text_frame = text_box.text_frame
         text_frame.clear()
         text_frame.word_wrap = True
-        text_frame.paragraphs[0].alignment = PP_ALIGN.LEFT
 
-        # ✅ 원본 텍스트 추가 (밑줄 + 볼드 처리 + 줄간격 1.5 적용)
+        p = text_frame.add_paragraph()
+        p.line_spacing = 1.5
+        p.space_after = Pt(10)
+        p.space_before = Pt(10)
+
         last_index = 0
-        paragraph = text_frame.add_paragraph()
-        paragraph.line_spacing = 1.5 # ✅ 줄간격 1.5 적용
-        paragraph.space_after = Pt(10)  
-        paragraph.space_before = Pt(10)
-
         for underline in underline_ranges:
             start, end = underline["start"], underline["end"]
             if last_index < start:
-                run = paragraph.add_run()
+                run = p.add_run()
                 run.text = original_text[last_index:start]
 
-            run = paragraph.add_run()
+            run = p.add_run()
             run.text = original_text[start:end + 1]
             run.font.underline = True
             run.font.bold = True
@@ -114,28 +146,22 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
             last_index = end + 1
 
         if last_index < len(original_text):
-            run = paragraph.add_run()
+            run = p.add_run()
             run.text = original_text[last_index:]
 
-        for run in paragraph.runs:
+        for run in p.runs:
             run.font.size = Pt(12)
             run.font.color.rgb = RGBColor(0, 0, 0)
             run.font.name = "맑은 고딕"
 
-        # ✅ 텍스트 높이 계산 (누락된 부분 추가)
-        text_height = len(original_text) / 80 * 0.4
-        text_box.height = Inches(text_height)
-
-        # ✅ 질문 리스트 가져오기
+        # 질문 목록
         questions = str(row["질문"]).strip() if pd.notna(row["질문"]) else "질문 없음"
+        question_y_position = line_y + 0.7 + (len(original_text) / 80 * 0.4)
 
-        # ✅ 원본 박스 아래에 질문목록 배치 (text_height 반영)
-        question_y_position = line_y + 0.7 + text_height
-
-        # ✅ '자기소개서 기반 면접 질문 제안' 소제목 추가 (16pt)
-        text_box = slide.shapes.add_textbox(Inches(0.5), Inches(question_y_position), Inches(6), Inches(0.5))
+        text_box = slide.shapes.add_textbox(Inches(0.5), Inches(question_y_position+3), Inches(whole_width), Inches(0.5))
         text_frame = text_box.text_frame
         text_frame.clear()
+
         p = text_frame.add_paragraph()
         p.text = "자기소개서 기반 면접 질문 제안"
         p.font.size = Pt(14)
@@ -144,38 +170,30 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
         p.font.name = "맑은 고딕"
         p.alignment = PP_ALIGN.LEFT
 
-        # ✅ 자기소개서 기반 면접 질문 제안 아래 Horizon
         line_shape = slide.shapes.add_shape(
-            MSO_SHAPE.RECTANGLE, Inches(0.5), Inches(question_y_position + 0.65), Inches(9), Inches(0.02)
+            MSO_SHAPE.RECTANGLE, Inches(0.5), Inches(question_y_position + 0.65+3), Inches(whole_width), Inches(0.02)
         )
         line_shape.fill.solid()
         line_shape.fill.fore_color.rgb = RGBColor(200, 200, 200)
         line_shape.line.fill.background()
 
-        # ✅ 질문 리스트 박스 (연한 회색 배경 + 테두리 + 그림자 추가)
         question_box = slide.shapes.add_shape(
-            MSO_SHAPE.RECTANGLE, Inches(0.5), Inches(question_y_position + 1), Inches(9), Inches(1.5)
+            MSO_SHAPE.RECTANGLE, Inches(0.5), Inches(question_y_position + 1+3), Inches(whole_width), Inches(1.5)
         )
         question_box.fill.solid()
-        question_box.fill.fore_color.rgb = RGBColor(245, 245, 245)  # ✅ 연한 회색 배경
-        question_box.line.color.rgb = RGBColor(180, 180, 180)  # ✅ 회색 테두리
-        question_box.shadow.inherit = True  # ✅ 그림자 추가
+        question_box.fill.fore_color.rgb = RGBColor(245, 245, 245)
+        question_box.line.color.rgb = RGBColor(180, 180, 180)
+        question_box.shadow.inherit = True
 
-        # ✅ 질문 리스트 텍스트 삽입 (볼드 처리 + 줄간격 1.5 적용)
-        text_frame = question_box.text_frame
-        text_frame.clear()
-        text_frame.word_wrap = True
-        text_frame.paragraphs[0].alignment = PP_ALIGN.LEFT
-
-        paragraph = text_frame.add_paragraph()
-        paragraph.line_spacing = 1.5
-        paragraph.text = questions
-        paragraph.font.size = Pt(12)
-        paragraph.font.bold = True
-        paragraph.font.color.rgb = RGBColor(0, 0, 0)
-        paragraph.font.name = "맑은 고딕"
-        paragraph.space_after = Pt(10)  # ✅ 줄간격 1.5 적용
-        paragraph.space_before = Pt(10)
+        p = question_box.text_frame.add_paragraph()
+        p.line_spacing = 1.5
+        p.text = questions
+        p.font.size = Pt(12)
+        p.font.bold = True
+        p.font.color.rgb = RGBColor(0, 0, 0)
+        p.font.name = "맑은 고딕"
+        p.space_after = Pt(10)
+        p.space_before = Pt(10)
 
     prs.save(output_pptx_path)
 
