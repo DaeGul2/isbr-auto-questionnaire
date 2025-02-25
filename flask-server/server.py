@@ -184,30 +184,30 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
         p.font.color.rgb = RGBColor(0, 0, 0)
         p.font.name = "맑은 고딕"
         p.alignment = PP_ALIGN.LEFT
+
+        line_shape = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE, Cm(0.98), Cm(22.57), whole_width, Cm(0.05)
+        )
+        line_shape.fill.solid()
+        line_shape.fill.fore_color.rgb = RGBColor(200, 200, 200)
+        line_shape.line.fill.background()
+
         question_box = slide.shapes.add_shape(
-            MSO_SHAPE.RECTANGLE, Cm(0.98), Cm(23), whole_width, Cm(3.81)
+            MSO_SHAPE.RECTANGLE, Cm(0.98), Cm(23), whole_width, Cm(5.8)
         )
         question_box.fill.solid()
         question_box.fill.fore_color.rgb = RGBColor(245, 245, 245)
         question_box.line.color.rgb = RGBColor(180, 180, 180)
         question_box.shadow.inherit = True
 
-        # 텍스트 프레임 설정
-        text_frame = question_box.text_frame
-        text_frame.margin_top = Pt(0)  # 상단 마진을 0으로 설정
-        text_frame.margin_bottom = Pt(0)  # 하단 마진을 0으로 설정
-        text_frame.word_wrap = True  # 단어 자동 줄바꿈 활성화
-
-        # 문단 설정
-        p = text_frame.add_paragraph()
-        p.space_before = Pt(0)  # 문단 시작 전 공간을 0으로 설정
-        p.space_after = Pt(0)   # 문단 끝난 후 공간을 0으로 설정
-
-        p.line_spacing = 1.5  # 줄 간격 설정
-        p.text = questions  # 질문 텍스트 설정
+        p = question_box.text_frame.add_paragraph()
+        p.line_spacing = 1.5
+        p.text = questions
         p.font.size = Pt(12)
         p.font.bold = True
         p.font.color.rgb = RGBColor(0, 0, 0)
+        p.space_after = Pt(10)
+        p.space_before = Pt(10)
 
     prs.save(output_pptx_path)
 
