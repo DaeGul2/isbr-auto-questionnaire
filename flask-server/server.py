@@ -23,6 +23,16 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["OUTPUT_FOLDER"] = OUTPUT_FOLDER
 
+#
+# 첫 번째 인자 (Cm(1.3)): 텍스트 박스의 왼쪽 상단 모서리의 x 좌표입니다. 이 값은 슬라이드의 왼쪽 가장자리에서 텍스트 박스 시작점까지의 가로 거리를 센티미터 단위로 나타냅니다.
+
+# 두 번째 인자 (Cm(0.94)): 텍스트 박스의 왼쪽 상단 모서리의 y 좌표입니다. 이 값은 슬라이드의 상단 가장자리에서 텍스트 박스 시작점까지의 세로 거리를 센티미터 단위로 나타냅니다.
+
+# 세 번째 인자 (Cm(7.62)): 텍스트 박스의 너비입니다. 이 값은 텍스트 박스의 가로 길이를 센티미터 단위로 설정합니다.
+
+# 네 번째 인자 (Cm(0.77)): 텍스트 박스의 높이입니다. 이 값은 텍스트 박스의 세로 길이를 센티미터 단위로 설정합니다.
+#
+
 # ✅ PPT 생성 함수 (질문 포함)
 def create_ppt(excel_path, output_pptx_path, id_to_text):
     df = pd.read_excel(excel_path)
@@ -33,21 +43,26 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
     prs.slide_height = Cm(29.7)
     print("컬럼 확인 : ", df.columns)
 
-    whole_width = 7.5  # 전체 너비를 이 변수로 제어
-    
+    whole_width = Cm(19.05)  # 전체 너비를 이 변수로 제어
 
     for _, row in df.iterrows():
         slide = prs.slides.add_slide(prs.slide_layouts[5])  # 백지 슬라이드
 
         # ✅ 지원자 ID 삽입 (좌측 상단)
         # 텍스트 박스 설정
-        text_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.5), Inches(3), Inches(0.5))
+        # ✅ 지원자 ID 삽입 (좌측 상단) - 위치 수정
+        
+        text_box = slide.shapes.add_textbox(Cm(0.98), Cm(0.14), Cm(7.62), Cm(0.77))
         text_frame = text_box.text_frame
         text_frame.clear()
 
         # 단락 생성
         p = text_frame.add_paragraph()
+        p.level = 0  # 들여쓰기 레벨 설정 (0은 들여쓰기 없음)
         p.alignment = PP_ALIGN.LEFT
+        p.space_before = Pt(0)  # 문단 앞 공간 제거
+        p.space_after = Pt(0)   # 문단 뒤 공간 제거
+        
 
         # '수험번호:' 부분 추가 (볼드 처리)
         run = p.add_run()
@@ -77,9 +92,9 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
         run.font.size = Pt(10)
         run.font.name = "맑은 고딕"
 
-         # 자기소개서 제목
-        title_y = 1.0
-        text_box = slide.shapes.add_textbox(Inches(0.5), Inches(title_y+0.2), Inches(whole_width), Inches(0.5))
+        # 자기소개서 제목
+        title_y = Cm(2.54)
+        text_box = slide.shapes.add_textbox(Cm(0.98), Cm(2.21), whole_width, Cm(1.27))
         text_frame = text_box.text_frame
         text_frame.clear()
 
@@ -92,26 +107,26 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
         p.alignment = PP_ALIGN.LEFT
     
         # 자소서_ID에 맞는 설명
-        description_y = title_y + 0.5
+        description_y = title_y + Cm(1.27)
         description_text = id_to_text.get(str(row["자소서_ID"]), "기본값")
 
-        text_box = slide.shapes.add_textbox(Inches(0.5), Inches(description_y+0.2), Inches(whole_width), Inches(0.5))
+        text_box = slide.shapes.add_textbox(Cm(0.98), Cm(3.41), whole_width, Cm(1.27))
         text_frame = text_box.text_frame
         text_frame.clear()
         text_frame.word_wrap = True
 
         p = text_frame.add_paragraph()
         p.text = "질문 : " + description_text
-        p.font.size = Pt(10)
+        p.font.size = Pt(8)
         p.font.bold = False
         p.font.color.rgb = RGBColor(0, 0, 0)
         p.font.name = "맑은 고딕"
         p.alignment = PP_ALIGN.LEFT
 
         # Horizon (수평선)
-        line_y = title_y + 0.65
+        line_y = title_y + Cm(1.65)
         line_shape = slide.shapes.add_shape(
-            MSO_SHAPE.RECTANGLE, Inches(0.5), Inches(line_y+0.2), Inches(whole_width), Inches(0.02)
+            MSO_SHAPE.RECTANGLE, Cm(0.98), Cm(3.91), whole_width, Cm(0.05)
         )
         line_shape.fill.solid()
         line_shape.fill.fore_color.rgb = RGBColor(200, 200, 200)
@@ -121,7 +136,7 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
         original_text = str(row["원본"]).strip() if pd.notna(row["원본"]) else ""
         underline_ranges = json.loads(row["밑줄 인덱스"]) if pd.notna(row["밑줄 인덱스"]) else []
 
-        text_box = slide.shapes.add_textbox(Inches(0.5), Inches(line_y - 0.1+0.2), Inches(whole_width), Inches(2))
+        text_box = slide.shapes.add_textbox(Cm(0.98), Cm(4.05), whole_width, Cm(5.08))
         text_frame = text_box.text_frame
         text_frame.clear()
         text_frame.word_wrap = True
@@ -156,9 +171,9 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
 
         # 질문 목록
         questions = str(row["질문"]).strip() if pd.notna(row["질문"]) else "질문 없음"
-        question_y_position = line_y + 0.7 + (len(original_text) / 80 * 0.4)
+        question_y_position = line_y + Cm(1.78) + (len(original_text) / 80 * Cm(1.02))
 
-        text_box = slide.shapes.add_textbox(Inches(0.5), Inches(question_y_position+3), Inches(whole_width), Inches(0.5))
+        text_box = slide.shapes.add_textbox(Cm(0.8), Cm(20.92), whole_width, Cm(1.27))
         text_frame = text_box.text_frame
         text_frame.clear()
 
@@ -169,31 +184,30 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
         p.font.color.rgb = RGBColor(0, 0, 0)
         p.font.name = "맑은 고딕"
         p.alignment = PP_ALIGN.LEFT
-
-        line_shape = slide.shapes.add_shape(
-            MSO_SHAPE.RECTANGLE, Inches(0.5), Inches(question_y_position + 0.65+3), Inches(whole_width), Inches(0.02)
-        )
-        line_shape.fill.solid()
-        line_shape.fill.fore_color.rgb = RGBColor(200, 200, 200)
-        line_shape.line.fill.background()
-
         question_box = slide.shapes.add_shape(
-            MSO_SHAPE.RECTANGLE, Inches(0.5), Inches(question_y_position + 1+3), Inches(whole_width), Inches(1.5)
+            MSO_SHAPE.RECTANGLE, Cm(0.98), Cm(23), whole_width, Cm(3.81)
         )
         question_box.fill.solid()
         question_box.fill.fore_color.rgb = RGBColor(245, 245, 245)
         question_box.line.color.rgb = RGBColor(180, 180, 180)
         question_box.shadow.inherit = True
 
-        p = question_box.text_frame.add_paragraph()
-        p.line_spacing = 1.5
-        p.text = questions
+        # 텍스트 프레임 설정
+        text_frame = question_box.text_frame
+        text_frame.margin_top = Pt(0)  # 상단 마진을 0으로 설정
+        text_frame.margin_bottom = Pt(0)  # 하단 마진을 0으로 설정
+        text_frame.word_wrap = True  # 단어 자동 줄바꿈 활성화
+
+        # 문단 설정
+        p = text_frame.add_paragraph()
+        p.space_before = Pt(0)  # 문단 시작 전 공간을 0으로 설정
+        p.space_after = Pt(0)   # 문단 끝난 후 공간을 0으로 설정
+
+        p.line_spacing = 1.5  # 줄 간격 설정
+        p.text = questions  # 질문 텍스트 설정
         p.font.size = Pt(12)
         p.font.bold = True
         p.font.color.rgb = RGBColor(0, 0, 0)
-        p.font.name = "맑은 고딕"
-        p.space_after = Pt(10)
-        p.space_before = Pt(10)
 
     prs.save(output_pptx_path)
 
