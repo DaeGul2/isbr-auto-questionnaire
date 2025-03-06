@@ -203,7 +203,7 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
         p = question_box.text_frame.add_paragraph()
         p.line_spacing = 1.5
         p.text = questions
-        p.font.size = Pt(12)
+        p.font.size = Pt(10)
         p.font.bold = True
         p.font.color.rgb = RGBColor(0, 0, 0)
         p.space_after = Pt(10)
