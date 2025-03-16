@@ -66,17 +66,19 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
 
         # '수험번호:' 부분 추가 (볼드 처리)
         run = p.add_run()
-        run.text = "수험번호 : "
+        run.text = "면접번호 : "
         run.font.bold = True
         run.font.size = Pt(10)
         run.font.name = "맑은 고딕"
 
         # 수험번호 값 추가 (볼드 미처리)
         run = p.add_run()
-        run.text = f"{row['지원자_ID']}\n"
+        run.text = f"{row['지원자_ID']}\n\n"
         run.font.bold = False
         run.font.size = Pt(10)
         run.font.name = "맑은 고딕"
+
+        
 
         # '지원분야:' 부분 추가 (볼드 처리)
         run = p.add_run()
@@ -117,7 +119,7 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
 
         p = text_frame.add_paragraph()
         p.text = "질문 : " + description_text
-        p.font.size = Pt(8)
+        p.font.size = Pt(10)
         p.font.bold = False
         p.font.color.rgb = RGBColor(0, 0, 0)
         p.font.name = "맑은 고딕"
@@ -171,7 +173,6 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
 
         # 질문 목록
         questions = str(row["질문"]).strip() if pd.notna(row["질문"]) else "질문 없음"
-        question_y_position = line_y + Cm(1.78) + (len(original_text) / 80 * Cm(1.02))
 
         text_box = slide.shapes.add_textbox(Cm(0.8), Cm(20.92), whole_width, Cm(1.27))
         text_frame = text_box.text_frame
@@ -200,7 +201,12 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
         question_box.line.color.rgb = RGBColor(180, 180, 180)
         question_box.shadow.inherit = True
 
-        p = question_box.text_frame.add_paragraph()
+        # 바로 아래의 코드가 포인트입니다.
+        question_tf = question_box.text_frame
+        question_tf.clear()  # clear 해도 빈 단락 하나는 반드시 남아있음.
+
+        # ★★ 여기서 새 단락을 만들지 않고 기존 기본단락을 이용!
+        p = question_tf.paragraphs[0]  
         p.line_spacing = 1.5
         p.text = questions
         p.font.size = Pt(11)
@@ -208,6 +214,7 @@ def create_ppt(excel_path, output_pptx_path, id_to_text):
         p.font.color.rgb = RGBColor(0, 0, 0)
         p.space_after = Pt(10)
         p.space_before = Pt(10)
+        p.alignment = PP_ALIGN.LEFT
 
     prs.save(output_pptx_path)
 
