@@ -2,3 +2,5 @@
 client/.env
 server/.env
 server/node_modules
+**/*.pdf
+**/*.zip
